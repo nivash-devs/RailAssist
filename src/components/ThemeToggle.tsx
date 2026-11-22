@@ -1,12 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { THEME_KEY } from "@/lib/headScripts";
 
-export const THEME_KEY = "railassist-theme";
 type Theme = "light" | "dark";
-
-/** Runs in <head> before the page paints: saved choice, else the system setting. */
-export const themeScript = `(function(){try{var t=localStorage.getItem("${THEME_KEY}");if(t!=="light"&&t!=="dark")t=matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light";document.documentElement.dataset.theme=t}catch(e){}})()`;
 
 /** Sun / moon button that switches between light and dark mode and remembers it. */
 export function ThemeToggle({ toDark, toLight }: { toDark: string; toLight: string }) {
@@ -35,7 +32,7 @@ export function ThemeToggle({ toDark, toLight }: { toDark: string; toLight: stri
       onClick={flip}
       aria-label={label}
       title={label}
-      className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-line bg-card text-brand-900 shadow-sm transition hover:border-brand-800 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-accent-500/30"
+      className="grid h-12 w-12 shrink-0 place-items-center rounded-full border border-line bg-card text-brand-900 shadow-sm transition hover:border-brand-800 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-accent-500/30"
     >
       {theme === "dark" ? (
         <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden>

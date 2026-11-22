@@ -9,11 +9,11 @@ export function Logo({ size = 40, sub }: { size?: number; sub?: string }) {
   return (
     <div className="flex min-w-0 items-center gap-2.5">
       <LogoMark size={size} />
-      <div className="min-w-0 leading-tight">
-        <div className="font-bold tracking-tight text-brand-900" style={{ fontSize: size * 0.5 }}>
+      <div className="logo-text min-w-0 leading-tight">
+        <div className="truncate font-bold tracking-tight text-brand-900" style={{ fontSize: `${(size * 0.5) / 16}rem` }}>
           RailAssist
         </div>
-        {sub && <div className="truncate text-[13px] text-muted">{sub}</div>}
+        {sub && <div className="truncate text-[0.8125rem] text-muted">{sub}</div>}
       </div>
     </div>
   );

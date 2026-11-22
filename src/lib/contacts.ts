@@ -77,6 +77,20 @@ export const SERVICE_CONTACTS: Record<NeedType, ContactOption[]> = {
   other: [],
 };
 
+/**
+ * FREE or PAID badge per kind of help, with a short note. Only from the
+ * official facts above (PIB facilities page, IRCTC wheelchair page).
+ * Left out when we could not confirm it from an official source.
+ */
+export type Cost = "free" | "paid";
+export const SERVICE_COST: Partial<Record<NeedType, { cost: Cost; note: "costWheelchair" | "costPorter" | "costBatteryCar" | "costLowerBerth" | "costMeal" }>> = {
+  wheelchair: { cost: "free", note: "costWheelchair" }, // free; online booking takes a refundable Rs 500 deposit
+  porter: { cost: "paid", note: "costPorter" }, // fixed rates shown at the station
+  battery_car: { cost: "paid", note: "costBatteryCar" }, // "most charge a small fee; some are free"
+  lower_berth: { cost: "free", note: "costLowerBerth" }, // quota at booking, TTE can give a free lower berth
+  meal: { cost: "paid", note: "costMeal" },
+};
+
 /** Shown on the welcome screen. */
 export const GENERAL_LINKS: ContactOption[] = [
   { kind: "app", label: "RailOne app (Android)", value: "https://play.google.com/store/apps/details?id=org.cris.aikyam", source: "https://play.google.com/store/apps/details?id=org.cris.aikyam" },

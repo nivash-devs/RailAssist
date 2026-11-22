@@ -74,6 +74,14 @@
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
 }
 
+/* Text size button: every size in the app is in rem, so this scales it all. */
+html[data-size="2"] {
+  font-size: 115%;
+}
+html[data-size="3"] {
+  font-size: 130%;
+}
+
 html,
 body {
   background: var(--color-paper);
@@ -210,4 +218,11 @@ body {
 .scroll-quiet {
   scrollbar-width: thin;
   scrollbar-color: var(--ra-scroll) transparent;
+}
+
+/* Bigger text on a phone: drop the logo words so the buttons fit. */
+@media (max-width: 639px) {
+  html[data-size] .logo-text {
+    display: none;
+  }
 }
