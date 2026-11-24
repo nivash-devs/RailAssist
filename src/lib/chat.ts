@@ -98,7 +98,7 @@ const KEYWORDS: Record<Exclude<NeedType, "other" | "escort">, string[]> = {
     "दवा", "डॉक्टर", "दवाई", "औषध", "மருந்து", "மருத்துவ", "டாக்டர்", "ಔಷಧ", "ವೈದ್ಯ", "మందు", "డాక్టర్", "ওষুধ", "ডাক্তার", "മരുന്ന്", "ഡോക്ടർ",
   ],
 };
-const GREETINGS = ["hi", "hello", "hey", "namaste", "namaskar", "thanks", "thank you", "नमस्ते", "धन्यवाद", "வணக்கம்", "ನಮಸ್ಕಾರ", "నమస్కారం", "নমস্কার", "നമസ്കാരം"];
+const GREETINGS = ["hi", "hello", "hey", "wassup", "sup", "yo", "how are you", "who are you", "ok", "okay", "bye", "namaste", "namaskar", "thanks", "thank you", "नमस्ते", "धन्यवाद", "வணக்கம்", "ನಮಸ್ಕಾರ", "నమస్కారం", "নমস্কার", "നമസ്കാരം"];
 
 /** Latin keywords must start a word ("eat" must not match "seat"); Indian scripts match anywhere. */
 function hasKeyword(text: string, w: string): boolean {

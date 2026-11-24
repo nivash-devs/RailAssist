@@ -9,7 +9,11 @@ import type { LangCode, NeedType } from "@/lib/types";
 import { ListIcon, MicIcon, NeedIcon, PhoneIcon, StopIcon } from "../Icons";
 import { LangPicker } from "../LangPicker";
 import { Logo } from "../Logo";
+import { deleteAllChats, deleteChat, loadMessages, saveChat as saveCloudChat, watchChats, type ChatMeta } from "@/lib/chatStore";
+import { ChatList } from "./ChatList";
 import { InstallPrompt } from "./InstallPrompt";
+import { GoogleG, SignIn } from "./SignIn";
+import { useAccount } from "./useAccount";
 import { useLang } from "../useLang";
 import { TextSize } from "../TextSize";
 import { ThemeToggle } from "../ThemeToggle";
@@ -17,6 +21,7 @@ import { GetIt } from "./GetIt";
 import { useRecorder } from "./useRecorder";
 
 const STORE_KEY = "railassist-chat";
+const GUEST_KEY = "railassist-guest";
 const uid = () => Math.random().toString(36).slice(2, 10);
 
 const WHERE_KEY: Record<Where, TKey | null> = {
@@ -65,29 +70,123 @@ function toApi(messages: ChatMessage[]) {
 
 export function ChatApp() {
   const [lang, setLang] = useLang("passenger");
+  const acct = useAccount();
+  const userId = acct.user?.uid ?? null;
+  const [guest, setGuest] = useState<boolean | null>(null);
   const [view, setView] = useState<View>("ask");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
+  const [chats, setChats] = useState<ChatMeta[]>([]);
+  const [activeId, setActiveId] = useState<string | null>(null);
+  const [drawer, setDrawer] = useState(false);
+  const activeRef = useRef<string | null>(null);
+  const savedKey = useRef("");
   const endRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
+  // "login": ask to sign in. "cloud": signed in, chats saved in Firestore. "local": no account, chat saved on this device.
+  const mode: "loading" | "login" | "cloud" | "local" = !acct.ready || guest === null ? "loading" : userId ? "cloud" : acct.enabled && !guest ? "login" : "local";
+  const inApp = mode === "cloud" || mode === "local";
+
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- load this device's chat after mount
+    try {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- read the saved "continue without signing in" choice after mount
+      setGuest(localStorage.getItem(GUEST_KEY) === "1");
+    } catch {
+      setGuest(false);
+    }
+  }, []);
+
+  // No account: the chat lives only in this browser.
+  useEffect(() => {
+    if (mode !== "local") return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- load this device's chat once we know there is no account
     setMessages(loadChat());
     setLoaded(true);
-  }, []);
+  }, [mode]);
   useEffect(() => {
-    if (loaded) saveChat(messages);
+    if (mode === "local" && loaded) saveChat(messages);
     // Keep the welcome message in view until the chat starts.
     if (view === "ask" && (messages.length || busy)) endRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
-  }, [messages, loaded, busy, view]);
+  }, [messages, loaded, busy, view, mode]);
+
+  /** Open a saved chat, or a fresh empty one. */
+  const openChat = (id: string, isNew: boolean) => {
+    activeRef.current = id;
+    setActiveId(id);
+    setMessages([]);
+    setNotice(null);
+    setDrawer(false);
+    setView("ask");
+    if (isNew || !userId) {
+      savedKey.current = `${id}:0`;
+      setLoaded(true);
+      return;
+    }
+    setLoaded(false);
+    loadMessages(userId, id)
+      .then((m) => {
+        if (activeRef.current !== id) return;
+        savedKey.current = `${id}:${m.length}`;
+        setMessages(m);
+        setLoaded(true);
+      })
+      .catch(() => {
+        if (activeRef.current !== id) return;
+        setNotice(t(lang, "saveFail"));
+        setLoaded(true);
+      });
+  };
+
+  // Signed in: follow this person's saved chats, and open the latest one (or a new one).
+  useEffect(() => {
+    if (!userId) return;
+    let first = true;
+    const unsubscribe = watchChats(
+      userId,
+      (list) => {
+        setChats(list);
+        if (first) {
+          first = false;
+          openChat(list[0]?.id ?? uid(), !list.length);
+        }
+      },
+      () => setNotice(t(lang, "saveFail")),
+    );
+    return () => {
+      unsubscribe();
+      activeRef.current = null;
+      setChats([]);
+      setActiveId(null);
+      setMessages([]);
+      setLoaded(false);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only restart when the person signs in or out
+  }, [userId]);
+
+  // Save the open chat to Firestore whenever it changes (not when it was only just opened).
+  useEffect(() => {
+    if (mode !== "cloud" || !userId || !activeId || !loaded || messages.length === 0) return;
+    const key = `${activeId}:${messages.length}`;
+    if (savedKey.current === key) return;
+    savedKey.current = key;
+    const title = (messages.find((m) => m.role === "user")?.text ?? "").slice(0, 60);
+    saveCloudChat(userId, activeId, title, messages).catch(() => setNotice(t(lang, "saveFail")));
+  }, [messages, activeId, loaded, userId, mode, lang]);
+
+  useEffect(() => {
+    if (!drawer) return;
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setDrawer(false);
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [drawer]);
 
   const send = async (raw: string) => {
     const content = raw.trim();
-    if (!content || busy) return;
+    if (!content || busy || !inApp || (mode === "cloud" && !loaded)) return;
     setView("ask");
     setNotice(null);
     setText("");
@@ -122,18 +221,87 @@ export function ChatApp() {
   );
 
   const newChat = () => {
+    if (mode === "cloud") {
+      if (messages.length === 0) {
+        setDrawer(false);
+        setView("ask");
+      } else openChat(uid(), true);
+      return;
+    }
     setMessages([]);
     setNotice(null);
   };
 
+  const removeChat = async (id: string) => {
+    if (!userId) return;
+    try {
+      await deleteChat(userId, id);
+    } catch {
+      setNotice(t(lang, "saveFail"));
+      return;
+    }
+    if (activeRef.current === id) {
+      const next = chats.find((c) => c.id !== id);
+      openChat(next?.id ?? uid(), !next);
+    }
+  };
+
+  const removeAll = async () => {
+    if (!userId) return;
+    try {
+      await deleteAllChats(userId);
+    } catch {
+      setNotice(t(lang, "saveFail"));
+      return;
+    }
+    openChat(uid(), true);
+  };
+
+  const googleSignIn = async () => {
+    await acct.signIn();
+  };
+  const continueAsGuest = () => {
+    try {
+      localStorage.setItem(GUEST_KEY, "1");
+    } catch {
+      /* ignore */
+    }
+    setGuest(true);
+  };
+  const signOut = async () => {
+    try {
+      localStorage.removeItem(GUEST_KEY);
+    } catch {
+      /* ignore */
+    }
+    setGuest(false);
+    setDrawer(false);
+    await acct.signOut();
+  };
+
   const working = busy || mic.state === "transcribing";
+  const privacy = mode === "cloud" ? t(lang, "privacySaved") : t(lang, "privacyNote");
+  const list = (
+    <ChatList
+      lang={lang}
+      chats={chats}
+      activeId={activeId}
+      name={acct.user?.displayName || acct.user?.email || ""}
+      disabled={working}
+      onOpen={(id) => openChat(id, false)}
+      onNew={newChat}
+      onDelete={(id) => void removeChat(id)}
+      onDeleteAll={() => void removeAll()}
+      onSignOut={() => void signOut()}
+    />
+  );
 
   return (
     <div className="relative flex h-dvh w-full flex-col bg-paper">
       <header className="shrink-0 border-b border-line bg-card">
         <div className="flex items-center justify-between gap-2 px-3 py-2.5 sm:px-4 lg:px-8 lg:py-3">
           <Logo size={38} sub={t(lang, "tagline")} />
-          <nav className="hidden items-center gap-1 rounded-full bg-paper p-1 lg:flex" aria-label="RailAssist">
+          <nav className={`items-center gap-1 rounded-full bg-paper p-1 ${inApp ? "hidden lg:flex" : "hidden"}`} aria-label="RailAssist">
             {VIEWS.map(({ id, key, Icon }) => (
               <button
                 key={id}
@@ -159,25 +327,56 @@ export function ChatApp() {
         </div>
       </header>
 
-      {view === "services" && (
+      {mode === "loading" && <div className="flex-1" />}
+
+      {mode === "login" && <SignIn lang={lang} onGoogle={googleSignIn} onGuest={continueAsGuest} />}
+
+      {inApp && view === "services" && (
         <main className="scroll-quiet min-h-0 flex-1 overflow-y-auto px-4 py-5 lg:px-8 lg:py-8" lang={lang}>
           <ServicesView lang={lang} disabled={working} onAsk={(type) => void send(t(lang, "askTopic", { topic: needLabel(lang, type) }))} />
         </main>
       )}
 
-      {view === "help" && (
+      {inApp && view === "help" && (
         <main className="scroll-quiet min-h-0 flex-1 overflow-y-auto px-4 py-5 lg:px-8 lg:py-8" lang={lang}>
-          <HelpView lang={lang} />
+          <HelpView lang={lang} note={privacy} />
         </main>
       )}
 
-      {view === "ask" && (
-        <>
+      {inApp && view === "ask" && (
+        <div className="flex min-h-0 flex-1">
+          {mode === "cloud" && <aside className="hidden w-72 shrink-0 border-r border-line bg-card lg:block xl:w-80">{list}</aside>}
+          <section className="flex min-w-0 flex-1 flex-col">
+          {mode === "cloud" && (
+            <div className="flex shrink-0 gap-2 border-b border-line bg-card px-3 py-2 lg:hidden">
+              <button
+                type="button"
+                onClick={() => setDrawer(true)}
+                className="flex min-h-12 flex-1 items-center justify-center gap-2 rounded-xl border border-line px-3 text-[1rem] font-bold text-brand-900"
+              >
+                <ListIcon className="h-5 w-5" />
+                {t(lang, "myChats")}
+              </button>
+              <button type="button" onClick={newChat} disabled={working} className="min-h-12 flex-1 rounded-xl bg-brand-800 px-3 text-[1rem] font-bold text-white disabled:opacity-60">
+                + {t(lang, "newChatShort")}
+              </button>
+            </div>
+          )}
           <main className="scroll-quiet flex min-h-0 flex-1 flex-col overflow-y-auto px-4 pb-4 pt-4 lg:px-8 lg:pt-8" lang={lang}>
             <div className="mx-auto flex w-full max-w-3xl flex-col">
               <BotBubble>
                 <p className="text-[1.125rem] leading-snug text-ink">{t(lang, "welcome")}</p>
-                <p className="mt-2 text-sm text-muted">{t(lang, "privacyNote")}</p>
+                <p className="mt-2 text-sm text-muted">{privacy}</p>
+                {mode === "local" && acct.enabled && (
+                  <button
+                    type="button"
+                    onClick={() => void googleSignIn().catch(() => setNotice(t(lang, "signInFail")))}
+                    className="mt-3 flex min-h-12 items-center gap-2 rounded-xl border-2 border-brand-800 bg-white px-3 text-[0.9375rem] font-bold text-[#201b17]"
+                  >
+                    <GoogleG className="h-5 w-5" />
+                    {t(lang, "signInToSave")}
+                  </button>
+                )}
               </BotBubble>
 
               {loaded && messages.length === 0 && (
@@ -267,17 +466,19 @@ export function ChatApp() {
                   </svg>
                 </button>
               </form>
-              {messages.length > 0 && (
+              {mode === "local" && messages.length > 0 && (
                 <button type="button" onClick={newChat} className="mt-1 min-h-12 w-full text-center text-[0.9375rem] font-semibold text-muted hover:text-brand-800">
                   {t(lang, "newChat")}
                 </button>
               )}
             </div>
           </div>
-        </>
+          </section>
+        </div>
       )}
 
       {/* Phone: tabs at the bottom, in thumb reach */}
+      {inApp && (
       <nav className="grid shrink-0 grid-cols-3 border-t border-line bg-card lg:hidden" aria-label="RailAssist">
         {VIEWS.map(({ id, key, Icon }) => (
           <button
@@ -296,6 +497,21 @@ export function ChatApp() {
           </button>
         ))}
       </nav>
+      )}
+
+      {drawer && mode === "cloud" && (
+        <div className="fixed inset-0 z-40 lg:hidden" role="dialog" aria-modal="true" aria-label={t(lang, "myChats")}>
+          <button type="button" aria-label={t(lang, "closeMenu")} onClick={() => setDrawer(false)} className="absolute inset-0 bg-black/50" />
+          <div className="anim-slide-in absolute inset-y-0 left-0 flex w-[88%] max-w-sm flex-col bg-card shadow-xl">
+            <div className="flex shrink-0 justify-end px-3 pt-3">
+              <button type="button" onClick={() => setDrawer(false)} className="min-h-12 rounded-xl px-4 text-[1rem] font-bold text-brand-900">
+                {t(lang, "closeMenu")}
+              </button>
+            </div>
+            <div className="min-h-0 flex-1">{list}</div>
+          </div>
+        </div>
+      )}
       <InstallPrompt lang={lang} />
     </div>
   );
@@ -358,7 +574,7 @@ function ServicesView({ lang, disabled, onAsk }: { lang: LangCode; disabled: boo
 }
 
 /** Help any time, official links, and what RailAssist is. */
-function HelpView({ lang }: { lang: LangCode }) {
+function HelpView({ lang, note }: { lang: LangCode; note: string }) {
   const helpline = helplineContacts();
   const links = generalLinks();
   return (
@@ -379,7 +595,7 @@ function HelpView({ lang }: { lang: LangCode }) {
             <span className="rounded-md bg-ok-600 px-2 py-0.5 text-[0.8125rem] font-extrabold tracking-wide text-paper">{t(lang, "free")}</span>
             {t(lang, "appFree")}
           </p>
-          <p className="mt-3 text-[0.9375rem] leading-snug text-muted">{t(lang, "privacyNote")}</p>
+          <p className="mt-3 text-[0.9375rem] leading-snug text-muted">{note}</p>
         </section>
         <div className="flex items-center gap-3 sm:hidden">
           <ThemeToggle toDark={t(lang, "darkMode")} toLight={t(lang, "lightMode")} />

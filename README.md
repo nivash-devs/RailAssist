@@ -4,7 +4,7 @@ Prototype for **Youth Ideathon 2026 (IRCTC track)**.
 
 RailAssist is a chatbot that helps elderly and disabled Indian Railways passengers (and their families) work out what help they need for a train journey, and how to get it. You type or speak in your own language. It tells you what to ask for and when, and gives you official links, apps and phone numbers to arrange each thing yourself.
 
-- **One chat, just for you.** There is no admin, no station desk and nobody else reading it. The chat is saved only on your own device.
+- **Your chats, just for you.** Sign in with Google to save your chats (Firebase project "RailAssist", Firestore in Mumbai). Security rules let each person read only their own chats. Start a new chat or delete any chat from the "My chats" list. You can also continue without signing in: then the chat stays only on your device.
 - **No booking.** RailAssist cannot book anything. It points you to the official way to do it (IRCTC, eCatering, Rail Madad, RailOne and so on). With an IRCTC partnership, it could book these for you in the future.
 - **Realistic.** It only helps with real railway services: wheelchair, porter (Sahayak), battery car, lower berth quota, food on the train, medical help, and help to reach your coach. Anything else (a teacher on board, a personal nurse, a taxi) is listed as **Not available on trains or at stations**. Unrelated requests (like "a Boeing aeroplane") get **"Sorry, I didn't understand that."**
 - **8 languages:** English, Hindi, Tamil, Kannada, Telugu, Bengali, Marathi, Malayalam.
@@ -76,6 +76,25 @@ UI text is in `src/lib/i18n.ts`. Hindi is complete. The other languages cover th
 - `src/app/api/transcribe/route.ts`: speech to text with Groq Whisper, in the chosen language.
 - `src/lib/config.ts`: model IDs (`whisper-large-v3-turbo`, `openai/gpt-oss-120b`).
 
+## Accounts and saved chats (Firebase)
+
+- Firebase project: `railassist-dbd5c` (Spark, free). Google sign-in is the only sign-in method.
+- Firestore: `users/{uid}/chats/{chatId}` holds the title and time, `users/{uid}/messages/{chatId}` holds the messages.
+- Security rules (Firestore > Rules):
+
+```
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /users/{uid}/{document=**} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+    }
+  }
+}
+```
+
+- The live domain must be listed under Authentication > Settings > Authorised domains.
+
 ## Deploying to Vercel
 
-Import the GitHub repo in Vercel and add `GROQ_API_KEY` under *Settings → Environment Variables*. Every push to `main` redeploys.
+Code: github.com/nivash-devs/RailAssist. In Vercel add `GROQ_API_KEY` and the four `NEXT_PUBLIC_FIREBASE_*` values under *Settings → Environment Variables*. Every push to `main` redeploys.
