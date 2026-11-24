@@ -1,4 +1,4 @@
-import { collection, doc, getDoc, getDocs, onSnapshot, orderBy, query, serverTimestamp, writeBatch, type Timestamp } from "firebase/firestore";
+import { collection, doc, getDoc, getDocs, onSnapshot, orderBy, query, serverTimestamp, updateDoc, writeBatch, type Timestamp } from "firebase/firestore";
 import type { ChatMessage } from "./chat";
 import { getFirebase } from "./firebase";
 
@@ -47,11 +47,16 @@ export async function loadMessages(uid: string, id: string): Promise<ChatMessage
   }
 }
 
-export async function saveChat(uid: string, id: string, title: string, messages: ChatMessage[]) {
+/** `title` is only written when given, so a name the person chose is never overwritten. */
+export async function saveChat(uid: string, id: string, title: string | null, messages: ChatMessage[]) {
   const batch = writeBatch(db());
-  batch.set(chatDoc(uid, id), { title, updatedAt: serverTimestamp() }, { merge: true });
+  batch.set(chatDoc(uid, id), title === null ? { updatedAt: serverTimestamp() } : { title, updatedAt: serverTimestamp() }, { merge: true });
   batch.set(bodyDoc(uid, id), { json: JSON.stringify(messages.slice(-60)) });
   await batch.commit();
+}
+
+export async function renameChat(uid: string, id: string, title: string) {
+  await updateDoc(chatDoc(uid, id), { title });
 }
 
 export async function deleteChat(uid: string, id: string) {

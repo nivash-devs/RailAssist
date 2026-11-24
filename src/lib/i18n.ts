@@ -19,13 +19,61 @@ import type { LangCode, NeedType } from "./types";
 export const LANGUAGES: { code: LangCode; native: string; english: string }[] = [
   { code: "en", native: "English", english: "English" },
   { code: "hi", native: "हिन्दी", english: "Hindi" },
-  { code: "ta", native: "தமிழ்", english: "Tamil" },
-  { code: "kn", native: "ಕನ್ನಡ", english: "Kannada" },
-  { code: "te", native: "తెలుగు", english: "Telugu" },
+  { code: "as", native: "অসমীয়া", english: "Assamese" },
   { code: "bn", native: "বাংলা", english: "Bengali" },
-  { code: "mr", native: "मराठी", english: "Marathi" },
+  { code: "brx", native: "बड़ो", english: "Bodo" },
+  { code: "doi", native: "डोगरी", english: "Dogri" },
+  { code: "gu", native: "ગુજરાતી", english: "Gujarati" },
+  { code: "kn", native: "ಕನ್ನಡ", english: "Kannada" },
+  { code: "ks", native: "کٲشُر", english: "Kashmiri" },
+  { code: "kok", native: "कोंकणी", english: "Konkani" },
+  { code: "mai", native: "मैथिली", english: "Maithili" },
   { code: "ml", native: "മലയാളം", english: "Malayalam" },
+  { code: "mni", native: "ꯃꯤꯇꯩꯂꯣꯟ", english: "Manipuri" },
+  { code: "mr", native: "मराठी", english: "Marathi" },
+  { code: "ne", native: "नेपाली", english: "Nepali" },
+  { code: "or", native: "ଓଡ଼ିଆ", english: "Odia" },
+  { code: "pa", native: "ਪੰਜਾਬੀ", english: "Punjabi" },
+  { code: "sa", native: "संस्कृतम्", english: "Sanskrit" },
+  { code: "sat", native: "ᱥᱟᱱᱛᱟᱲᱤ", english: "Santali" },
+  { code: "sd", native: "سنڌي", english: "Sindhi" },
+  { code: "ta", native: "தமிழ்", english: "Tamil" },
+  { code: "te", native: "తెలుగు", english: "Telugu" },
+  { code: "ur", native: "اردو", english: "Urdu" },
 ];
+
+/** Name given to the AI, with the script to write in where it is not obvious. */
+const AI_LANGUAGE: Partial<Record<LangCode, string>> = {
+  brx: "Bodo (in Devanagari script)",
+  doi: "Dogri (in Devanagari script)",
+  kok: "Konkani (in Devanagari script)",
+  mai: "Maithili (in Devanagari script)",
+  ks: "Kashmiri (in Perso-Arabic script)",
+  mni: "simple English (the person may write in Manipuri, but always reply in simple English)",
+  pa: "Punjabi (in Gurmukhi script)",
+  sat: "simple English (the person may write in Santali, but always reply in simple English)",
+  sd: "Sindhi (in Perso-Arabic script)",
+};
+
+/** The AI cannot write these well yet (tested 2026-11-24: it produced nonsense), so it answers in simple English. */
+export const LIMITED_AI: LangCode[] = ["mni", "sat"];
+
+/** Languages written right to left. */
+const RTL: LangCode[] = ["ur", "ks", "sd"];
+export const langDir = (code: LangCode): "rtl" | "ltr" => (RTL.includes(code) ? "rtl" : "ltr");
+
+/**
+ * Voice: Whisper does not know every Indian language. For those it lacks we
+ * pass the closest language that uses the same script (or nothing, to let it
+ * guess), so the AI still gets readable text. The AI then replies in the
+ * language the person picked.
+ */
+export const WHISPER_LANGUAGE: Record<LangCode, string | null> = {
+  en: "en", hi: "hi", as: "as", bn: "bn", gu: "gu", kn: "kn", ml: "ml", mr: "mr", ne: "ne",
+  pa: "pa", sa: "sa", sd: "sd", ta: "ta", te: "te", ur: "ur",
+  brx: "hi", doi: "hi", mai: "hi", kok: "mr", ks: "ur",
+  or: null, mni: null, sat: null,
+};
 
 const en = {
   tagline: "Your train travel helper",
@@ -180,6 +228,8 @@ const en = {
   untitledChat: "New chat",
   noChats: "No saved chats yet.",
   deleteChat: "Delete chat",
+  renameChat: "Rename chat",
+  save: "Save",
   deleteAsk: "Delete this chat?",
   deleteYes: "Yes, delete",
   cancel: "Cancel",
@@ -188,6 +238,7 @@ const en = {
   closeMenu: "Close",
   saveFail: "Could not save your chat. Check your internet.",
   privacySaved: "Your chats are saved privately to your Google sign-in. Only you can see them.",
+  limitedLang: "RailAssist cannot write {language} well yet, so it answers in simple English. You can still type or speak in {language}.",
 };
 
 export type TKey = keyof typeof en;
@@ -346,6 +397,8 @@ const hi: Dict = {
   untitledChat: "नई बातचीत",
   noChats: "अभी कोई सहेजी हुई बातचीत नहीं है।",
   deleteChat: "बातचीत हटाएँ",
+  renameChat: "बातचीत का नाम बदलें",
+  save: "सहेजें",
   deleteAsk: "यह बातचीत हटाएँ?",
   deleteYes: "हाँ, हटाएँ",
   cancel: "रद्द करें",
@@ -795,10 +848,189 @@ const ml: Dict = {
   lightMode: "ലൈറ്റ് മോഡ് ഓണാക്കുക",
 };
 
-const DICTS: Record<LangCode, Dict> = { en, hi, ta, kn, te, bn, mr, ml };
+// TODO(native-speaker review): Gujarati. Core chat words only; the rest falls back to English.
+const gu: Dict = {
+  tagline: "તમારો ટ્રેન મુસાફરી સહાયક",
+  language: "ભાષા",
+  welcome: "નમસ્તે! હું RailAssist છું. તમારી ટ્રેન મુસાફરી અને તમને જોઈતી મદદ વિશે કહો, જેમ કે વ્હીલચેર, સામાન માટે મદદ, કે ટ્રેનમાં જમવાનું.",
+  privacyNote: "આ ચેટ ફક્ત તમારા ઉપકરણ પર રહે છે. બીજું કોઈ તેને જોતું નથી.",
+  suggestWheelchair: "મને સ્ટેશન પર વ્હીલચેર જોઈએ છે",
+  suggestBags: "મને ભારે સામાન માટે મદદ જોઈએ છે",
+  suggestFood: "ટ્રેનમાં જમવાનું કેવી રીતે મંગાવું?",
+  suggestMedical: "મને ટ્રેનમાં તબીબી મદદ જોઈએ છે",
+  typeMessage: "તમારો સંદેશ લખો",
+  send: "મોકલો",
+  newChat: "નવી ચેટ શરૂ કરો",
+  thinking: "વિચારી રહ્યું છે…",
+  tapToSpeak: "બોલવા માટે દબાવો",
+  listening: "સાંભળી રહ્યું છે… બંધ કરવા દબાવો",
+  notUnderstood: "માફ કરશો, હું સમજી શક્યો નહીં.",
+  navAsk: "પૂછો",
+  navServices: "સેવાઓ",
+  navHelp: "મદદ",
+  free: "મફત",
+  paid: "ચૂકવણી",
+  alwaysAvailable: "ગમે ત્યારે મદદ",
+  howToGet: "આજે કેવી રીતે મેળવવું",
+  whereBoarding: "જ્યાંથી તમે ચડો છો તે સ્ટેશન પર",
+  whereArrival: "જ્યાં તમે ઉતરો છો તે સ્ટેશન પર",
+  whereOnboard: "ટ્રેનમાં",
+};
+
+// TODO(native-speaker review): Punjabi. Core chat words only; the rest falls back to English.
+const pa: Dict = {
+  tagline: "ਤੁਹਾਡਾ ਰੇਲ ਯਾਤਰਾ ਸਹਾਇਕ",
+  language: "ਭਾਸ਼ਾ",
+  welcome: "ਸਤ ਸ੍ਰੀ ਅਕਾਲ! ਮੈਂ RailAssist ਹਾਂ। ਆਪਣੀ ਰੇਲ ਯਾਤਰਾ ਅਤੇ ਲੋੜੀਂਦੀ ਮਦਦ ਬਾਰੇ ਦੱਸੋ, ਜਿਵੇਂ ਵ੍ਹੀਲਚੇਅਰ, ਸਮਾਨ ਲਈ ਮਦਦ, ਜਾਂ ਰੇਲ ਵਿੱਚ ਖਾਣਾ।",
+  privacyNote: "ਇਹ ਗੱਲਬਾਤ ਸਿਰਫ਼ ਤੁਹਾਡੇ ਡਿਵਾਈਸ 'ਤੇ ਰਹਿੰਦੀ ਹੈ। ਕੋਈ ਹੋਰ ਇਸਨੂੰ ਨਹੀਂ ਦੇਖਦਾ।",
+  suggestWheelchair: "ਮੈਨੂੰ ਸਟੇਸ਼ਨ 'ਤੇ ਵ੍ਹੀਲਚੇਅਰ ਚਾਹੀਦੀ ਹੈ",
+  suggestBags: "ਮੈਨੂੰ ਭਾਰੀ ਸਮਾਨ ਲਈ ਮਦਦ ਚਾਹੀਦੀ ਹੈ",
+  suggestFood: "ਰੇਲ ਵਿੱਚ ਖਾਣਾ ਕਿਵੇਂ ਮੰਗਵਾਵਾਂ?",
+  suggestMedical: "ਮੈਨੂੰ ਰੇਲ ਵਿੱਚ ਡਾਕਟਰੀ ਮਦਦ ਚਾਹੀਦੀ ਹੈ",
+  typeMessage: "ਆਪਣਾ ਸੁਨੇਹਾ ਲਿਖੋ",
+  send: "ਭੇਜੋ",
+  newChat: "ਨਵੀਂ ਗੱਲਬਾਤ ਸ਼ੁਰੂ ਕਰੋ",
+  thinking: "ਸੋਚ ਰਿਹਾ ਹੈ…",
+  tapToSpeak: "ਬੋਲਣ ਲਈ ਦਬਾਓ",
+  listening: "ਸੁਣ ਰਿਹਾ ਹੈ… ਰੋਕਣ ਲਈ ਦਬਾਓ",
+  notUnderstood: "ਮਾਫ਼ ਕਰਨਾ, ਮੈਨੂੰ ਸਮਝ ਨਹੀਂ ਆਇਆ।",
+  navAsk: "ਪੁੱਛੋ",
+  navServices: "ਸੇਵਾਵਾਂ",
+  navHelp: "ਮਦਦ",
+  free: "ਮੁਫ਼ਤ",
+  paid: "ਭੁਗਤਾਨ ਵਾਲੀ",
+  alwaysAvailable: "ਕਿਸੇ ਵੀ ਸਮੇਂ ਮਦਦ",
+  howToGet: "ਅੱਜ ਕਿਵੇਂ ਪ੍ਰਾਪਤ ਕਰੀਏ",
+  whereBoarding: "ਜਿਸ ਸਟੇਸ਼ਨ ਤੋਂ ਤੁਸੀਂ ਚੜ੍ਹਦੇ ਹੋ",
+  whereArrival: "ਜਿਸ ਸਟੇਸ਼ਨ 'ਤੇ ਤੁਸੀਂ ਉਤਰਦੇ ਹੋ",
+  whereOnboard: "ਰੇਲ ਵਿੱਚ",
+};
+
+// TODO(native-speaker review): Odia. Core chat words only; the rest falls back to English.
+const or_: Dict = {
+  tagline: "ଆପଣଙ୍କ ଟ୍ରେନ ଯାତ୍ରା ସହାୟକ",
+  language: "ଭାଷା",
+  welcome: "ନମସ୍କାର! ମୁଁ RailAssist। ଆପଣଙ୍କ ଟ୍ରେନ ଯାତ୍ରା ଏବଂ ଆବଶ୍ୟକ ସାହାଯ୍ୟ ବିଷୟରେ କୁହନ୍ତୁ, ଯେପରି ହ୍ୱିଲଚେୟାର, ଜିନିଷପତ୍ର ପାଇଁ ସାହାଯ୍ୟ, କିମ୍ବା ଟ୍ରେନରେ ଖାଦ୍ୟ।",
+  privacyNote: "ଏହି ଚାଟ୍ କେବଳ ଆପଣଙ୍କ ଡିଭାଇସରେ ରହେ। ଅନ୍ୟ କେହି ଏହାକୁ ଦେଖନ୍ତି ନାହିଁ।",
+  suggestWheelchair: "ମୋତେ ଷ୍ଟେସନରେ ହ୍ୱିଲଚେୟାର ଦରକାର",
+  suggestBags: "ମୋତେ ଭାରି ଜିନିଷପତ୍ର ପାଇଁ ସାହାଯ୍ୟ ଦରକାର",
+  suggestFood: "ଟ୍ରେନରେ ଖାଦ୍ୟ କିପରି ଅର୍ଡର କରିବି?",
+  suggestMedical: "ମୋତେ ଟ୍ରେନରେ ଚିକିତ୍ସା ସାହାଯ୍ୟ ଦରକାର",
+  typeMessage: "ଆପଣଙ୍କ ବାର୍ତ୍ତା ଲେଖନ୍ତୁ",
+  send: "ପଠାନ୍ତୁ",
+  newChat: "ନୂଆ ଚାଟ୍ ଆରମ୍ଭ କରନ୍ତୁ",
+  thinking: "ଭାବୁଛି…",
+  tapToSpeak: "କହିବା ପାଇଁ ଦବାନ୍ତୁ",
+  listening: "ଶୁଣୁଛି… ବନ୍ଦ କରିବା ପାଇଁ ଦବାନ୍ତୁ",
+  notUnderstood: "କ୍ଷମା କରନ୍ତୁ, ମୁଁ ବୁଝିପାରିଲି ନାହିଁ।",
+  navAsk: "ପଚାରନ୍ତୁ",
+  navServices: "ସେବା",
+  navHelp: "ସାହାଯ୍ୟ",
+  free: "ମାଗଣା",
+  paid: "ଦେୟ",
+  alwaysAvailable: "ଯେକୌଣସି ସମୟରେ ସାହାଯ୍ୟ",
+  howToGet: "ଆଜି କିପରି ପାଇବେ",
+  whereBoarding: "ଆପଣ ଚଢୁଥିବା ଷ୍ଟେସନରେ",
+  whereArrival: "ଆପଣ ଓହ୍ଲାଉଥିବା ଷ୍ଟେସନରେ",
+  whereOnboard: "ଟ୍ରେନରେ",
+};
+
+// TODO(native-speaker review): Urdu. Core chat words only; the rest falls back to English.
+const ur: Dict = {
+  tagline: "آپ کا ٹرین سفر مددگار",
+  language: "زبان",
+  welcome: "آداب! میں RailAssist ہوں۔ اپنے ٹرین سفر اور جو مدد چاہیے اس کے بارے میں بتائیں، جیسے وہیل چیئر، سامان کے لیے مدد، یا ٹرین میں کھانا۔",
+  privacyNote: "یہ چیٹ صرف آپ کے آلے پر رہتی ہے۔ کوئی اور اسے نہیں دیکھتا۔",
+  suggestWheelchair: "مجھے اسٹیشن پر وہیل چیئر چاہیے",
+  suggestBags: "مجھے بھاری سامان کے لیے مدد چاہیے",
+  suggestFood: "ٹرین میں کھانا کیسے منگواؤں؟",
+  suggestMedical: "مجھے ٹرین میں طبی مدد چاہیے",
+  typeMessage: "اپنا پیغام لکھیں",
+  send: "بھیجیں",
+  newChat: "نئی چیٹ شروع کریں",
+  thinking: "سوچ رہا ہے…",
+  tapToSpeak: "بولنے کے لیے دبائیں",
+  listening: "سن رہا ہے… روکنے کے لیے دبائیں",
+  notUnderstood: "معاف کیجیے، میں سمجھ نہیں پایا۔",
+  navAsk: "پوچھیں",
+  navServices: "خدمات",
+  navHelp: "مدد",
+  free: "مفت",
+  paid: "ادائیگی",
+  alwaysAvailable: "کسی بھی وقت مدد",
+  howToGet: "آج کیسے حاصل کریں",
+  whereBoarding: "جس اسٹیشن سے آپ سوار ہوتے ہیں",
+  whereArrival: "جس اسٹیشن پر آپ اترتے ہیں",
+  whereOnboard: "ٹرین میں",
+};
+
+// TODO(native-speaker review): Assamese. Core chat words only; the rest falls back to English.
+const as_: Dict = {
+  tagline: "আপোনাৰ ৰেল যাত্ৰাৰ সহায়ক",
+  language: "ভাষা",
+  welcome: "নমস্কাৰ! মই RailAssist। আপোনাৰ ৰেল যাত্ৰা আৰু প্ৰয়োজনীয় সহায়ৰ বিষয়ে কওক, যেনে হুইলচেয়াৰ, বস্তুৰ বাবে সহায়, বা ৰেলত খাদ্য।",
+  privacyNote: "এই চেট কেৱল আপোনাৰ ডিভাইচত থাকে। আন কোনেও ইয়াক নেদেখে।",
+  suggestWheelchair: "মোক ষ্টেচনত হুইলচেয়াৰ লাগে",
+  suggestBags: "মোক গধুৰ বস্তুৰ বাবে সহায় লাগে",
+  suggestFood: "ৰেলত খাদ্য কেনেকৈ অৰ্ডাৰ কৰিম?",
+  suggestMedical: "মোক ৰেলত চিকিৎসাৰ সহায় লাগে",
+  typeMessage: "আপোনাৰ বাৰ্তা লিখক",
+  send: "পঠাওক",
+  newChat: "নতুন চেট আৰম্ভ কৰক",
+  thinking: "ভাবি আছে…",
+  tapToSpeak: "কথা ক'বলৈ টিপক",
+  listening: "শুনি আছে… বন্ধ কৰিবলৈ টিপক",
+  notUnderstood: "ক্ষমা কৰিব, মই বুজি নাপালোঁ।",
+  navAsk: "সোধক",
+  navServices: "সেৱা",
+  navHelp: "সহায়",
+  free: "বিনামূলীয়া",
+  paid: "মাচুল লাগে",
+  alwaysAvailable: "যিকোনো সময়ত সহায়",
+  howToGet: "আজি কেনেকৈ পাব",
+  whereBoarding: "আপুনি উঠা ষ্টেচনত",
+  whereArrival: "আপুনি নমা ষ্টেচনত",
+  whereOnboard: "ৰেলত",
+};
+
+// TODO(native-speaker review): Nepali. Core chat words only; the rest falls back to English.
+const ne: Dict = {
+  tagline: "तपाईंको रेल यात्रा सहायक",
+  language: "भाषा",
+  welcome: "नमस्ते! म RailAssist हुँ। तपाईंको रेल यात्रा र चाहिने सहयोगबारे भन्नुहोस्, जस्तै ह्वीलचेयर, सामानका लागि सहयोग, वा रेलमा खाना।",
+  privacyNote: "यो च्याट तपाईंको उपकरणमा मात्र रहन्छ। अरू कसैले यसलाई देख्दैन।",
+  suggestWheelchair: "मलाई स्टेसनमा ह्वीलचेयर चाहिन्छ",
+  suggestBags: "मलाई गह्रौं सामानका लागि सहयोग चाहिन्छ",
+  suggestFood: "रेलमा खाना कसरी अर्डर गर्ने?",
+  suggestMedical: "मलाई रेलमा उपचार सहयोग चाहिन्छ",
+  typeMessage: "आफ्नो सन्देश लेख्नुहोस्",
+  send: "पठाउनुहोस्",
+  newChat: "नयाँ च्याट सुरु गर्नुहोस्",
+  thinking: "सोच्दैछ…",
+  tapToSpeak: "बोल्न थिच्नुहोस्",
+  listening: "सुन्दैछ… रोक्न थिच्नुहोस्",
+  notUnderstood: "माफ गर्नुहोस्, मैले बुझिनँ।",
+  navAsk: "सोध्नुहोस्",
+  navServices: "सेवाहरू",
+  navHelp: "सहयोग",
+  free: "निःशुल्क",
+  paid: "सशुल्क",
+  alwaysAvailable: "जुनसुकै बेला सहयोग",
+  howToGet: "आज कसरी पाउने",
+  whereBoarding: "तपाईं चढ्ने स्टेसनमा",
+  whereArrival: "तपाईं ओर्लने स्टेसनमा",
+  whereOnboard: "रेलमा",
+};
+
+const DICTS: Partial<Record<LangCode, Dict>> = { en, hi, ta, kn, te, bn, mr, ml, gu, pa, or: or_, ur, as: as_, ne };
+
+// No UI translation yet: show the closest language most readers of it also read
+// (same script), else English. The AI still replies in the chosen language.
+const FALLBACK: Partial<Record<LangCode, LangCode>> = { brx: "hi", doi: "hi", mai: "hi", sa: "hi", kok: "mr", ks: "ur", sd: "ur" };
 
 export function t(lang: LangCode, key: TKey, params?: Record<string, string | number>): string {
-  let s = DICTS[lang]?.[key] ?? en[key];
+  const fb = FALLBACK[lang];
+  let s = DICTS[lang]?.[key] ?? (fb ? DICTS[fb]?.[key] : undefined) ?? en[key];
   if (params) {
     for (const [k, v] of Object.entries(params)) s = s.split(`{${k}}`).join(String(v));
   }
@@ -822,6 +1054,11 @@ export function needLabel(lang: LangCode, type: NeedType): string {
 
 export function langName(code: LangCode): string {
   return LANGUAGES.find((l) => l.code === code)?.english ?? "English";
+}
+
+/** Language name for the AI prompt (with the script where needed). */
+export function aiLanguageName(code: LangCode): string {
+  return AI_LANGUAGE[code] ?? langName(code);
 }
 
 export function isLang(x: unknown): x is LangCode {

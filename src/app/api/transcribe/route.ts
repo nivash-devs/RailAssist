@@ -1,5 +1,5 @@
 import { GROQ_BASE_URL, MODELS } from "@/lib/config";
-import { isLang } from "@/lib/i18n";
+import { isLang, WHISPER_LANGUAGE } from "@/lib/i18n";
 
 const MAX_BYTES = 20 * 1024 * 1024; // stay under Groq's 25 MB free-tier limit
 
@@ -32,7 +32,8 @@ export async function POST(req: Request) {
   out.append("model", MODELS.transcribe);
   out.append("response_format", "json");
   out.append("temperature", "0");
-  if (isLang(lang)) out.append("language", lang);
+  const hint = isLang(lang) ? WHISPER_LANGUAGE[lang] : null;
+  if (hint) out.append("language", hint);
 
   try {
     const res = await fetch(`${GROQ_BASE_URL}/audio/transcriptions`, {

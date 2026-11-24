@@ -16,6 +16,12 @@ const TrashIcon = ({ className }: { className?: string }) => (
   </svg>
 );
 
+const PencilIcon = ({ className }: { className?: string }) => (
+  <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+    <path d="M4 20h4L19 9l-4-4L4 16v4zM14 6l4 4" />
+  </svg>
+);
+
 /** Saved chats: open one, start a new one, delete one or all. Used in the PC side panel and the phone drawer. */
 export function ChatList({
   lang,
@@ -26,6 +32,7 @@ export function ChatList({
   onOpen,
   onNew,
   onDelete,
+  onRename,
   onDeleteAll,
   onSignOut,
 }: {
@@ -37,10 +44,13 @@ export function ChatList({
   onOpen: (id: string) => void;
   onNew: () => void;
   onDelete: (id: string) => void;
+  onRename: (id: string, title: string) => void;
   onDeleteAll: () => void;
   onSignOut: () => void;
 }) {
   const [confirm, setConfirm] = useState<string | "all" | null>(null);
+  const [editing, setEditing] = useState<string | null>(null);
+  const [draftTitle, setDraftTitle] = useState("");
   const draft = activeId !== null && !chats.some((c) => c.id === activeId);
 
   return (
@@ -86,6 +96,38 @@ export function ChatList({
                   </button>
                 </div>
               </div>
+            ) : editing === c.id ? (
+              <form
+                className="rounded-xl border-2 border-brand-800 bg-card px-3 py-3"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  const title = draftTitle.trim().slice(0, 60);
+                  setEditing(null);
+                  if (title && title !== c.title) onRename(c.id, title);
+                }}
+              >
+                <label className="text-[0.875rem] font-semibold text-muted" htmlFor={`rename-${c.id}`}>
+                  {t(lang, "renameChat")}
+                </label>
+                <input
+                  id={`rename-${c.id}`}
+                  autoFocus
+                  dir="auto"
+                  value={draftTitle}
+                  maxLength={60}
+                  onChange={(e) => setDraftTitle(e.target.value)}
+                  onKeyDown={(e) => e.key === "Escape" && setEditing(null)}
+                  className="mt-1 min-h-12 w-full rounded-xl border-2 border-line bg-paper px-3 text-[1rem] text-ink outline-none focus:border-brand-700"
+                />
+                <div className="mt-2 flex gap-2">
+                  <button type="submit" className="min-h-12 flex-1 rounded-xl bg-brand-800 px-2 text-[0.9375rem] font-bold text-white">
+                    {t(lang, "save")}
+                  </button>
+                  <button type="button" onClick={() => setEditing(null)} className="min-h-12 flex-1 rounded-xl border border-line px-2 text-[0.9375rem] font-bold text-brand-900">
+                    {t(lang, "cancel")}
+                  </button>
+                </div>
+              </form>
             ) : (
               <div className={`flex items-stretch rounded-xl border ${c.id === activeId ? "border-2 border-brand-800 bg-brand-50" : "border-line bg-card"}`}>
                 <button
@@ -99,10 +141,22 @@ export function ChatList({
                 </button>
                 <button
                   type="button"
+                  onClick={() => {
+                    setEditing(c.id);
+                    setDraftTitle(c.title);
+                  }}
+                  aria-label={`${t(lang, "renameChat")}: ${c.title || t(lang, "untitledChat")}`}
+                  title={t(lang, "renameChat")}
+                  className="grid w-11 shrink-0 place-items-center text-muted transition hover:text-brand-800"
+                >
+                  <PencilIcon className="h-5 w-5" />
+                </button>
+                <button
+                  type="button"
                   onClick={() => setConfirm(c.id)}
                   aria-label={`${t(lang, "deleteChat")}: ${c.title || t(lang, "untitledChat")}`}
                   title={t(lang, "deleteChat")}
-                  className="grid w-12 shrink-0 place-items-center rounded-r-xl text-muted transition hover:text-brand-800"
+                  className="grid w-11 shrink-0 place-items-center rounded-r-xl text-muted transition hover:text-brand-800"
                 >
                   <TrashIcon className="h-5 w-5" />
                 </button>

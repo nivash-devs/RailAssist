@@ -7,7 +7,11 @@ RailAssist is a chatbot that helps elderly and disabled Indian Railways passenge
 - **Your chats, just for you.** Sign in with Google to save your chats (Firebase project "RailAssist", Firestore in Mumbai). Security rules let each person read only their own chats. Start a new chat or delete any chat from the "My chats" list. You can also continue without signing in: then the chat stays only on your device.
 - **No booking.** RailAssist cannot book anything. It points you to the official way to do it (IRCTC, eCatering, Rail Madad, RailOne and so on). With an IRCTC partnership, it could book these for you in the future.
 - **Realistic.** It only helps with real railway services: wheelchair, porter (Sahayak), battery car, lower berth quota, food on the train, medical help, and help to reach your coach. Anything else (a teacher on board, a personal nurse, a taxi) is listed as **Not available on trains or at stations**. Unrelated requests (like "a Boeing aeroplane") get **"Sorry, I didn't understand that."**
-- **8 languages:** English, Hindi, Tamil, Kannada, Telugu, Bengali, Marathi, Malayalam.
+- **23 languages:** English and all 22 languages of the Eighth Schedule (Assamese, Bengali, Bodo, Dogri, Gujarati, Hindi, Kannada, Kashmiri, Konkani, Maithili, Malayalam, Manipuri, Marathi, Nepali, Odia, Punjabi, Sanskrit, Santali, Sindhi, Tamil, Telugu, Urdu). Urdu, Kashmiri and Sindhi read right to left.
+  - The AI cannot write Manipuri or Santali well yet (tested 24 Nov 2026), so for those it answers in simple English and says so.
+  - Voice: Whisper has no Bodo, Dogri, Kashmiri, Konkani, Maithili, Manipuri, Odia or Santali, so those use the closest language with the same script, or auto-detect.
+  - Screen text is translated for 14 languages; Bodo, Dogri, Maithili and Sanskrit show Hindi, Konkani shows Marathi, Kashmiri and Sindhi show Urdu, Manipuri and Santali show English.
+- **Rename, new chat, delete:** signed-in people can rename any saved chat.
 
 Live: https://railassist-ideathon.vercel.app (same chatbot on phone and PC).
 

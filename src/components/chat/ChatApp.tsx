@@ -4,12 +4,12 @@ import { useEffect, useRef, useState } from "react";
 import type { BotReply, ChatMessage, ChatNeed, Where } from "@/lib/chat";
 import { offlineReply, PLANNABLE } from "@/lib/chat";
 import { generalLinks, helplineContacts, serviceContacts, SERVICE_COST } from "@/lib/contacts";
-import { needLabel, t, type TKey } from "@/lib/i18n";
+import { langDir, langName, LIMITED_AI, needLabel, t, type TKey } from "@/lib/i18n";
 import type { LangCode, NeedType } from "@/lib/types";
 import { ListIcon, MicIcon, NeedIcon, PhoneIcon, StopIcon } from "../Icons";
 import { LangPicker } from "../LangPicker";
 import { Logo } from "../Logo";
-import { deleteAllChats, deleteChat, loadMessages, saveChat as saveCloudChat, watchChats, type ChatMeta } from "@/lib/chatStore";
+import { deleteAllChats, deleteChat, loadMessages, renameChat, saveChat as saveCloudChat, watchChats, type ChatMeta } from "@/lib/chatStore";
 import { ChatList } from "./ChatList";
 import { InstallPrompt } from "./InstallPrompt";
 import { GoogleG, SignIn } from "./SignIn";
@@ -173,8 +173,11 @@ export function ChatApp() {
     const key = `${activeId}:${messages.length}`;
     if (savedKey.current === key) return;
     savedKey.current = key;
-    const title = (messages.find((m) => m.role === "user")?.text ?? "").slice(0, 60);
+    // Name a chat after its first question, but never replace a name the person gave it.
+    const named = chats.find((c) => c.id === activeId)?.title;
+    const title = named ? null : (messages.find((m) => m.role === "user")?.text ?? "").slice(0, 60);
     saveCloudChat(userId, activeId, title, messages).catch(() => setNotice(t(lang, "saveFail")));
+      // eslint-disable-next-line react-hooks/exhaustive-deps -- the chat list changing on its own must not trigger a save
   }, [messages, activeId, loaded, userId, mode, lang]);
 
   useEffect(() => {
@@ -246,6 +249,10 @@ export function ChatApp() {
     }
   };
 
+  const rename = (id: string, title: string) => {
+    if (userId) renameChat(userId, id, title).catch(() => setNotice(t(lang, "saveFail")));
+  };
+
   const removeAll = async () => {
     if (!userId) return;
     try {
@@ -291,6 +298,7 @@ export function ChatApp() {
       onOpen={(id) => openChat(id, false)}
       onNew={newChat}
       onDelete={(id) => void removeChat(id)}
+      onRename={rename}
       onDeleteAll={() => void removeAll()}
       onSignOut={() => void signOut()}
     />
@@ -332,13 +340,13 @@ export function ChatApp() {
       {mode === "login" && <SignIn lang={lang} onGoogle={googleSignIn} onGuest={continueAsGuest} />}
 
       {inApp && view === "services" && (
-        <main className="scroll-quiet min-h-0 flex-1 overflow-y-auto px-4 py-5 lg:px-8 lg:py-8" lang={lang}>
+        <main className="scroll-quiet min-h-0 flex-1 overflow-y-auto px-4 py-5 lg:px-8 lg:py-8" lang={lang} dir={langDir(lang)}>
           <ServicesView lang={lang} disabled={working} onAsk={(type) => void send(t(lang, "askTopic", { topic: needLabel(lang, type) }))} />
         </main>
       )}
 
       {inApp && view === "help" && (
-        <main className="scroll-quiet min-h-0 flex-1 overflow-y-auto px-4 py-5 lg:px-8 lg:py-8" lang={lang}>
+        <main className="scroll-quiet min-h-0 flex-1 overflow-y-auto px-4 py-5 lg:px-8 lg:py-8" lang={lang} dir={langDir(lang)}>
           <HelpView lang={lang} note={privacy} />
         </main>
       )}
@@ -362,10 +370,13 @@ export function ChatApp() {
               </button>
             </div>
           )}
-          <main className="scroll-quiet flex min-h-0 flex-1 flex-col overflow-y-auto px-4 pb-4 pt-4 lg:px-8 lg:pt-8" lang={lang}>
+          <main className="scroll-quiet flex min-h-0 flex-1 flex-col overflow-y-auto px-4 pb-4 pt-4 lg:px-8 lg:pt-8" lang={lang} dir={langDir(lang)}>
             <div className="mx-auto flex w-full max-w-3xl flex-col">
               <BotBubble>
                 <p className="text-[1.125rem] leading-snug text-ink">{t(lang, "welcome")}</p>
+                {LIMITED_AI.includes(lang) && (
+                  <p className="mt-2 rounded-xl bg-accent-50 px-3 py-2 text-[0.9375rem] font-semibold text-accent-600">{t(lang, "limitedLang", { language: langName(lang) })}</p>
+                )}
                 <p className="mt-2 text-sm text-muted">{privacy}</p>
                 {mode === "local" && acct.enabled && (
                   <button
@@ -451,6 +462,7 @@ export function ChatApp() {
                       void send(text);
                     }
                   }}
+                  dir="auto"
                   aria-label={t(lang, "typeMessage")}
                   placeholder={mic.state === "recording" ? t(lang, "listening") : t(lang, "typeMessage")}
                   className="max-h-32 min-h-14 flex-1 resize-none rounded-2xl border-2 border-line bg-paper px-4 py-3.5 text-[1.125rem] leading-snug text-ink outline-none focus:border-brand-700"
