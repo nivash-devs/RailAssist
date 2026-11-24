@@ -238,6 +238,7 @@ const en = {
   closeMenu: "Close",
   saveFail: "Could not save your chat. Check your internet.",
   privacySaved: "Your chats are saved privately to your Google sign-in. Only you can see them.",
+  beRespectful: "Please talk politely. I am here to help with your train journey.",
   limitedLang: "RailAssist cannot write {language} well yet, so it answers in simple English. You can still type or speak in {language}.",
 };
 
@@ -406,6 +407,7 @@ const hi: Dict = {
   deleteAllAsk: "आपकी सारी सहेजी हुई बातचीत हटा दें? यह वापस नहीं होगी।",
   closeMenu: "बंद करें",
   saveFail: "आपकी बातचीत सहेजी नहीं जा सकी। इंटरनेट जाँचें।",
+  beRespectful: "कृपया शालीनता से बात करें। मैं आपकी ट्रेन यात्रा में मदद के लिए हूँ।",
   privacySaved: "आपकी बातचीत आपके Google साइन इन में निजी रूप से सहेजी जाती है। सिर्फ़ आप इसे देख सकते हैं।",
 };
 

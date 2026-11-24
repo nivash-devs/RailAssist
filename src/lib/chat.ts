@@ -1,5 +1,6 @@
 import { NEED_TYPES, type LangCode, type NeedType } from "./types";
 import { needLabel, t } from "./i18n";
+import { isAbusive } from "./profanity";
 
 /** Where the passenger needs the help. */
 export type Where = "boarding" | "arrival" | "onboard" | "any";
@@ -42,10 +43,16 @@ function strList(x: unknown): string[] {
   return x.map((v) => str(v, 60)).filter((v): v is string => !!v).slice(0, 5);
 }
 
+/** Fixed reply to swearing or insults: no help cards, just a calm request to be polite. */
+export function abusiveReply(lang: LangCode, source: BotReply["source"] = "ai"): BotReply {
+  return { understood: true, reply: t(lang, "beRespectful"), needs: [], notPossible: [], source };
+}
+
 /** Validate the model's JSON. Returns null if unusable (the caller retries). */
 export function validateReply(raw: unknown, lang: LangCode): BotReply | null {
   if (!raw || typeof raw !== "object") return null;
   const o = raw as Record<string, unknown>;
+  if (o.abusive === true) return abusiveReply(lang);
   if (o.understood === false) return { understood: false, reply: t(lang, "notUnderstood"), needs: [], notPossible: [], source: "ai" };
   const reply = str(o.reply);
   if (!reply) return null;
@@ -120,6 +127,7 @@ const DEFAULT_WHERE: Record<NeedType, Where> = {
 };
 
 export function offlineReply(text: string, lang: LangCode): BotReply {
+  if (isAbusive(text)) return abusiveReply(lang, "offline");
   const lower = text.toLowerCase();
   const found = (Object.keys(KEYWORDS) as (keyof typeof KEYWORDS)[]).filter((k) => KEYWORDS[k].some((w) => hasKeyword(lower, w)));
   if (!found.length) {

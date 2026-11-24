@@ -1,6 +1,7 @@
-import { offlineReply, validateReply, type BotReply } from "@/lib/chat";
+import { offlineReply, validateReply, type BotReply, abusiveReply } from "@/lib/chat";
 import { GROQ_BASE_URL, MODELS } from "@/lib/config";
 import { aiLanguageName, isLang } from "@/lib/i18n";
+import { isAbusive } from "@/lib/profanity";
 import { buildSystemPrompt } from "@/lib/systemPrompt";
 import type { LangCode } from "@/lib/types";
 
@@ -78,6 +79,9 @@ export async function POST(req: Request) {
     .map((m) => ({ role: m.role as "user" | "assistant", content: m.content!.trim().slice(0, MAX_CHARS) }));
   const last = history[history.length - 1];
   if (!last || last.role !== "user") return Response.json({ error: "bad_request" }, { status: 400 });
+
+  // Swearing and insults get a fixed polite reply; the AI never sees them.
+  if (isAbusive(last.content)) return Response.json({ reply: abusiveReply(lang) });
 
   const key = process.env.GROQ_API_KEY;
   if (!key) {
