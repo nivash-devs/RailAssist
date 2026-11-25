@@ -656,7 +656,7 @@ function BotMessage({ reply, lang }: { reply: BotReply; lang: LangCode }) {
         <NeedCard key={n.type + n.where + i} need={n} lang={lang} delay={i * 90} />
       ))}
 
-      {reply.needs.length > 0 && helpline.length > 0 && (
+      {reply.needs.some((n) => n.type === "medical") && helpline.length > 0 && (
         <div className="rounded-2xl border border-line bg-brand-50/70 px-4 py-3">
           <div className="text-[0.9375rem] font-bold text-brand-900">{t(lang, "alwaysAvailable")}</div>
           <GetIt contacts={helpline} lang={lang} />
