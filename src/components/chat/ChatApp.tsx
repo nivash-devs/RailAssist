@@ -416,7 +416,7 @@ export function ChatApp() {
               {messages.map((m) =>
                 m.role === "user" ? (
                   <div key={m.id} className="anim-fade-up mt-3 flex justify-end">
-                    <div className="max-w-[85%] rounded-2xl rounded-br-md bg-brand-800 px-4 py-3 text-[1.125rem] leading-snug text-white">{m.text}</div>
+                    <div className="max-w-[85%] rounded-2xl rounded-br-md bg-brand-800 px-4 py-3 text-[1.125rem] leading-snug text-white [overflow-wrap:anywhere]">{m.text}</div>
                   </div>
                 ) : (
                   <BotMessage key={m.id} reply={m.bot!} lang={lang} />
@@ -647,7 +647,7 @@ function HelpView({ lang, note }: { lang: LangCode; note: string }) {
           <p className="mt-3 text-[0.9375rem] leading-snug text-muted">{note}</p>
         </section>
         <div className="flex items-center gap-3 sm:hidden">
-          <ThemeToggle toDark={t(lang, "darkMode")} toLight={t(lang, "lightMode")} />
+          <ThemeToggle toDark={t(lang, "darkMode")} toLight={t(lang, "lightMode")} withText />
         </div>
       </div>
       {links.length > 0 && (
@@ -673,7 +673,7 @@ function BotMessage({ reply, lang }: { reply: BotReply; lang: LangCode }) {
   return (
     <div className="anim-fade-up mt-3 max-w-[96%] space-y-2">
       <BotBubble>
-        <p className="text-[1.125rem] leading-snug text-ink">{reply.reply}</p>
+        <p className="text-[1.125rem] leading-snug text-ink [overflow-wrap:anywhere]">{reply.reply}</p>
         {!reply.understood && <p className="mt-2 text-[1rem] leading-snug text-muted">{t(lang, "canHelpWith")}</p>}
         {reply.source === "offline" && reply.understood && <p className="mt-2 text-sm text-muted">{t(lang, "offlinePlan")}</p>}
       </BotBubble>
@@ -717,7 +717,7 @@ function NeedCard({ need, lang, delay }: { need: ChatNeed; lang: LangCode; delay
           {whereKey && <div className="text-sm font-semibold text-accent-600">{t(lang, whereKey)}</div>}
           <div className="text-lg font-bold leading-tight text-ink">{need.title || needLabel(lang, need.type)}</div>
           <CostBadge type={need.type} lang={lang} withNote />
-          <p className="mt-1 text-[1rem] leading-snug text-muted">{need.instruction}</p>
+          <p className="mt-1 text-[1rem] leading-snug text-muted [overflow-wrap:anywhere]">{need.instruction}</p>
         </div>
       </div>
       {links.length > 0 && (

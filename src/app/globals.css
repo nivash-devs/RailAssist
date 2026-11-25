@@ -226,3 +226,16 @@ body {
     display: none;
   }
 }
+/* Small phones: the tagline only fits cut off, so leave just "RailAssist". */
+@media (max-width: 420px) {
+  .logo-sub {
+    display: none;
+  }
+}
+
+/* Empty chat box: keep the hint on one line instead of wrapping with a scrollbar. */
+#chat-input:placeholder-shown {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

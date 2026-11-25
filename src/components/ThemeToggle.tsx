@@ -6,7 +6,7 @@ import { THEME_KEY } from "@/lib/headScripts";
 type Theme = "light" | "dark";
 
 /** Sun / moon button that switches between light and dark mode and remembers it. */
-export function ThemeToggle({ toDark, toLight }: { toDark: string; toLight: string }) {
+export function ThemeToggle({ toDark, toLight, withText = false }: { toDark: string; toLight: string; withText?: boolean }) {
   const [theme, setTheme] = useState<Theme | null>(null);
 
   useEffect(() => {
@@ -32,7 +32,9 @@ export function ThemeToggle({ toDark, toLight }: { toDark: string; toLight: stri
       onClick={flip}
       aria-label={label}
       title={label}
-      className="grid h-12 w-12 shrink-0 place-items-center rounded-full border border-line bg-card text-brand-900 shadow-sm transition hover:border-brand-800 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-accent-500/30"
+      className={`flex h-12 shrink-0 items-center justify-center gap-2 rounded-full border border-line bg-card text-brand-900 shadow-sm transition hover:border-brand-800 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-accent-500/30 ${
+        withText ? "px-5 text-[1rem] font-bold" : "w-12"
+      }`}
     >
       {theme === "dark" ? (
         <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden>
@@ -44,6 +46,7 @@ export function ThemeToggle({ toDark, toLight }: { toDark: string; toLight: stri
           <path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5Z" />
         </svg>
       )}
+      {withText && theme && <span>{label}</span>}
     </button>
   );
 }

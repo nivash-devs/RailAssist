@@ -13,7 +13,7 @@ export function Logo({ size = 40, sub }: { size?: number; sub?: string }) {
         <div className="truncate font-bold tracking-tight text-brand-900" style={{ fontSize: `${(size * 0.5) / 16}rem` }}>
           RailAssist
         </div>
-        {sub && <div className="truncate text-[0.8125rem] text-muted">{sub}</div>}
+        {sub && <div className="logo-sub truncate text-[0.8125rem] text-muted">{sub}</div>}
       </div>
     </div>
   );
