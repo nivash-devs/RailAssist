@@ -28,9 +28,14 @@ export function GetIt({ contacts, lang }: { contacts: ContactOption[]; lang: Lan
             rel={isPhone ? undefined : "noopener noreferrer"}
             className="flex min-w-0 items-center gap-3 rounded-xl border-2 border-brand-800 bg-card px-3 py-2.5 text-brand-800 transition hover:bg-brand-50 active:scale-[0.98]"
           >
-            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-brand-800 text-white">
-              {isPhone ? <PhoneIcon className="h-5 w-5" /> : <LinkIcon className="h-5 w-5" />}
-            </span>
+            {c.icon ? (
+              // eslint-disable-next-line @next/next/no-img-element -- tiny local icon, no need for next/image
+              <img src={c.icon} alt="" width={36} height={36} className="h-9 w-9 shrink-0 rounded-xl" />
+            ) : (
+              <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-brand-800 text-white">
+                {isPhone ? <PhoneIcon className="h-5 w-5" /> : <LinkIcon className="h-5 w-5" />}
+              </span>
+            )}
             <span className="min-w-0 leading-tight">
               <span className="block text-[1.0625rem] font-bold">
                 {isPhone ? t(lang, "callNumber", { number: c.value }) : c.label}

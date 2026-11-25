@@ -22,6 +22,8 @@ export interface ContactOption {
   source: string;
   /** Optional translation key (from i18n.ts) shown instead of `value`. */
   i18nKey?: "enquiryCounter";
+  /** The app's official store icon, in /public. */
+  icon?: string;
 }
 
 // Researched and opened on 2026-11-08. PIB = Press Information Bureau (Govt of India).
@@ -64,8 +66,8 @@ export const SERVICE_CONTACTS: Record<NeedType, ContactOption[]> = {
   meal: [
     { kind: "phone", label: "Order food to your seat (IRCTC eCatering)", value: "1323", source: "https://www.ecatering.irctc.co.in/" },
     { kind: "website", label: "Order food online (IRCTC eCatering)", value: "https://www.ecatering.irctc.co.in/", source: "https://www.ecatering.irctc.co.in/" },
-    { kind: "app", label: "Food on Track app (Android)", value: "https://play.google.com/store/apps/details?id=com.irctc.fot", source: "https://play.google.com/store/apps/details?id=com.irctc.fot" },
-    { kind: "app", label: "Food on Track app (iPhone)", value: "https://apps.apple.com/in/app/irctc-catering-food-on-track/id1077183717", source: "https://apps.apple.com/in/app/irctc-catering-food-on-track/id1077183717" },
+    { kind: "app", label: "Food on Track app (Android)", value: "https://play.google.com/store/apps/details?id=com.irctc.fot", source: "https://play.google.com/store/apps/details?id=com.irctc.fot", icon: "/icons/food-on-track.png" },
+    { kind: "app", label: "Food on Track app (iPhone)", value: "https://apps.apple.com/in/app/irctc-catering-food-on-track/id1077183717", source: "https://apps.apple.com/in/app/irctc-catering-food-on-track/id1077183717", icon: "/icons/food-on-track.png" },
   ],
   medical: [
     // 139: press 1 for medical/security help (PIB 8 Mar 2021, Rail Madad site).
