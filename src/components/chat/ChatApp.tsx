@@ -587,28 +587,33 @@ function ServicesView({ lang, disabled, onAsk, onChat }: { lang: LangCode; disab
       </section>
       <div className="mt-5 grid grid-cols-1 gap-3 md:grid-cols-2">
         {PLANNABLE.map((type) => (
-          <div key={type} className="flex min-w-0 flex-col rounded-2xl border border-line bg-card px-4 py-4">
-            <div className="flex gap-3">
-              <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-accent-50 text-accent-600">
-                <NeedIcon type={type} className="h-6 w-6" />
+          <div key={type} className="flex min-w-0 flex-col rounded-2xl border border-line bg-card p-5 shadow-sm transition hover:shadow-md">
+            <div className="flex items-start gap-3">
+              <span className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl bg-accent-50 text-accent-600">
+                <NeedIcon type={type} className="h-7 w-7" />
               </span>
               <div className="min-w-0 flex-1">
-                <div className="flex flex-wrap items-center gap-2">
-                  <h2 className="text-[1.1875rem] font-bold leading-tight text-ink">{needLabel(lang, type)}</h2>
+                <div className="flex items-start justify-between gap-2">
+                  <h2 className="text-[1.25rem] font-bold leading-tight text-ink">{needLabel(lang, type)}</h2>
+                  <CostBadge type={type} lang={lang} />
                 </div>
-                <CostBadge type={type} lang={lang} withNote />
+                {SERVICE_COST[type] && <p className="mt-1 text-[0.9375rem] leading-snug text-muted">{t(lang, SERVICE_COST[type]!.note)}</p>}
               </div>
             </div>
-            <div className="flex-1">
-              <GetIt contacts={serviceContacts(type)} lang={lang} />
+            <div className="mt-4 flex-1 border-t border-line pt-3">
+              <div className="text-[0.8125rem] font-bold uppercase tracking-wide text-muted">{t(lang, "howToGet")}</div>
+              <GetIt contacts={serviceContacts(type)} lang={lang} soft />
             </div>
             <button
               type="button"
               disabled={disabled}
               onClick={() => onAsk(type)}
-              className="mt-3 min-h-12 rounded-xl bg-brand-50 px-4 text-[1rem] font-bold text-brand-800 transition hover:bg-brand-100 disabled:opacity-60"
+              className="mt-4 flex min-h-12 items-center justify-between rounded-xl bg-brand-50 px-4 text-[1rem] font-bold text-brand-800 transition hover:bg-brand-100 disabled:opacity-60"
             >
               {t(lang, "askAbout")}
+              <svg viewBox="0 0 24 24" className="h-5 w-5 rtl:-scale-x-100" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                <path d="M5 12h14M13 6l6 6-6 6" />
+              </svg>
             </button>
           </div>
         ))}

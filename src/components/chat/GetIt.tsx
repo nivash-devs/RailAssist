@@ -4,7 +4,7 @@ import type { LangCode } from "@/lib/types";
 import { LinkIcon, PhoneIcon, PinIcon } from "../Icons";
 
 /** Call / open / ask-at buttons so the passenger can arrange help themselves. */
-export function GetIt({ contacts, lang }: { contacts: ContactOption[]; lang: LangCode }) {
+export function GetIt({ contacts, lang, soft = false }: { contacts: ContactOption[]; lang: LangCode; soft?: boolean }) {
   return (
     <div className="mt-2 space-y-2">
       {contacts.map((c) => {
@@ -26,13 +26,15 @@ export function GetIt({ contacts, lang }: { contacts: ContactOption[]; lang: Lan
             href={href}
             target={isPhone ? undefined : "_blank"}
             rel={isPhone ? undefined : "noopener noreferrer"}
-            className="flex min-w-0 items-center gap-3 rounded-xl border-2 border-brand-800 bg-card px-3 py-2.5 text-brand-800 transition hover:bg-brand-50 active:scale-[0.98]"
+            className={`flex min-w-0 items-center gap-3 rounded-xl px-3 py-2.5 transition active:scale-[0.98] ${
+              soft ? "border border-line bg-paper text-brand-900 hover:border-brand-800" : "border-2 border-brand-800 bg-card text-brand-800 hover:bg-brand-50"
+            }`}
           >
             {c.icon ? (
               // eslint-disable-next-line @next/next/no-img-element -- tiny local icon, no need for next/image
               <img src={c.icon} alt="" width={36} height={36} className="h-9 w-9 shrink-0 rounded-xl" />
             ) : (
-              <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-brand-800 text-white">
+              <span className={`grid h-9 w-9 shrink-0 place-items-center rounded-full ${soft ? "bg-brand-100 text-brand-800" : "bg-brand-800 text-white"}`}>
                 {isPhone ? <PhoneIcon className="h-5 w-5" /> : <LinkIcon className="h-5 w-5" />}
               </span>
             )}
