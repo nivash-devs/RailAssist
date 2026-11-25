@@ -562,14 +562,14 @@ function ServicesView({ lang, disabled, onAsk, onChat }: { lang: LangCode; disab
   const callHref = call ? contactHref(call) : null;
   return (
     <div className="mx-auto w-full max-w-5xl">
-      <section className="rounded-3xl bg-brand-800 px-5 py-6 text-white lg:px-8 lg:py-8">
-        <h1 className="text-[1.625rem] font-extrabold leading-tight lg:text-[2rem]">{t(lang, "servicesTitle")}</h1>
-        <p className="mt-2 max-w-2xl text-[1.0625rem] leading-snug text-white/90 lg:text-[1.1875rem]">{t(lang, "servicesIntro")}</p>
+      <section className="rounded-3xl border border-line bg-card px-5 py-6 lg:px-8 lg:py-8">
+        <h1 className="text-[1.625rem] font-extrabold leading-tight text-brand-900 lg:text-[2rem]">{t(lang, "servicesTitle")}</h1>
+        <p className="mt-2 max-w-2xl text-[1.0625rem] leading-snug text-muted lg:text-[1.1875rem]">{t(lang, "servicesIntro")}</p>
         <div className="mt-5 flex flex-col gap-2 sm:flex-row">
           <button
             type="button"
             onClick={onChat}
-            className="flex min-h-14 items-center justify-center gap-2 rounded-2xl bg-white px-5 text-[1.0625rem] font-bold text-brand-800 transition hover:opacity-90 active:scale-[0.98]"
+            className="flex min-h-14 items-center justify-center gap-2 rounded-2xl bg-brand-800 px-5 text-[1.0625rem] font-bold text-white transition hover:opacity-90 active:scale-[0.98]"
           >
             <MicIcon className="h-5 w-5" />
             {t(lang, "askOwnWords")}
@@ -577,7 +577,7 @@ function ServicesView({ lang, disabled, onAsk, onChat }: { lang: LangCode; disab
           {call && callHref && (
             <a
               href={callHref}
-              className="flex min-h-14 items-center justify-center gap-2 rounded-2xl border-2 border-white/70 px-5 text-[1.0625rem] font-bold text-white transition hover:bg-white/10 active:scale-[0.98]"
+              className="flex min-h-14 items-center justify-center gap-2 rounded-2xl border-2 border-line px-5 text-[1.0625rem] font-bold text-brand-900 transition hover:border-brand-800 active:scale-[0.98]"
             >
               <PhoneIcon className="h-5 w-5" />
               {t(lang, "callNumber", { number: call.value })}
