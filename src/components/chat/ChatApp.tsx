@@ -585,7 +585,7 @@ function ServicesView({ lang, disabled, onAsk, onChat }: { lang: LangCode; disab
           )}
         </div>
       </section>
-      <div className="mt-5 grid grid-cols-1 gap-3 md:grid-cols-2">
+      <div className="mt-5 grid grid-cols-1 items-start gap-3 md:grid-cols-2">
         {PLANNABLE.map((type) => (
           <div key={type} className="flex min-w-0 flex-col rounded-2xl border border-line bg-card p-5 shadow-sm transition hover:shadow-md">
             <div className="flex items-start gap-3">
