@@ -585,9 +585,9 @@ function ServicesView({ lang, disabled, onAsk, onChat }: { lang: LangCode; disab
           )}
         </div>
       </section>
-      <div className="mt-5 grid grid-cols-1 items-start gap-3 md:grid-cols-2">
+      <div className="mt-5 gap-3 md:columns-2">
         {PLANNABLE.map((type) => (
-          <div key={type} className="flex min-w-0 flex-col rounded-2xl border border-line bg-card p-5 shadow-sm transition hover:shadow-md">
+          <div key={type} className="mb-3 flex min-w-0 break-inside-avoid flex-col rounded-2xl border border-line bg-card p-5 shadow-sm transition hover:shadow-md">
             <div className="flex items-start gap-3">
               <span className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl bg-accent-50 text-accent-600">
                 <NeedIcon type={type} className="h-7 w-7" />
