@@ -452,11 +452,12 @@ export function ChatApp() {
                   onClick={mic.toggle}
                   disabled={busy || mic.state === "transcribing"}
                   aria-label={mic.state === "recording" ? t(lang, "listening") : t(lang, "tapToSpeak")}
-                  className={`relative grid h-14 w-14 shrink-0 place-items-center rounded-full text-white transition active:scale-95 disabled:opacity-50 ${
+                  className={`relative flex h-14 min-w-14 shrink-0 flex-col items-center justify-center gap-0.5 rounded-2xl px-2.5 text-white transition active:scale-95 disabled:opacity-50 ${
                     mic.state === "recording" ? "pulse-ring bg-red-600 text-red-600" : "bg-accent-500 hover:bg-accent-600"
                   }`}
                 >
-                  <span className="relative text-white">{mic.state === "recording" ? <StopIcon className="h-6 w-6" /> : <MicIcon className="h-7 w-7" />}</span>
+                  <span className="relative text-white">{mic.state === "recording" ? <StopIcon className="h-5 w-5" /> : <MicIcon className="h-6 w-6" />}</span>
+                  <span className="relative text-[0.75rem] font-bold leading-none text-white">{t(lang, mic.state === "recording" ? "stop" : "speak")}</span>
                 </button>
                 <textarea
                   id="chat-input"
@@ -602,7 +603,7 @@ function ServicesView({ lang, disabled, onAsk, onChat }: { lang: LangCode; disab
             </div>
             <div className="mt-4 flex-1 border-t border-line pt-3">
               <div className="text-[0.8125rem] font-bold uppercase tracking-wide text-muted">{t(lang, "howToGet")}</div>
-              <GetIt contacts={serviceContacts(type)} lang={lang} soft />
+              <GetIt contacts={serviceContacts(type)} lang={lang} />
             </div>
             <button
               type="button"
