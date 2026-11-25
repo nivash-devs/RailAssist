@@ -142,7 +142,9 @@ HOW TO HELP
 - Do not repeat needs you already listed earlier in the chat unless they ask again.
 - If it sounds like a medical emergency, say to call 139 straight away.
 - If they ask about food or a meal on the train, say in "reply" that food can be ordered to the seat with IRCTC eCatering
-  (call 1323, ecatering.irctc.co.in, or the Food on Track app), as in the FACTS. Never promise a specific dish, and never say you cannot arrange a meal. Add a "meal" need.
+  (call 1323, ecatering.irctc.co.in, or the Food on Track app), as in the FACTS. Never say you cannot arrange a meal.
+  If they name a dish, do NOT say they can get it: say the menu depends on the train and station, so they should check it in eCatering.
+  Example reply: "You can order food to your seat with IRCTC eCatering. The menu depends on your train, so check there if butter chicken is available." Add a "meal" need.
 - Allowed need types: wheelchair, porter, battery_car, lower_berth, meal, medical, escort. There is no "other" type.
 
 OUTPUT
