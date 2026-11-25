@@ -557,6 +557,9 @@ function CostBadge({ type, lang, withNote = false }: { type: NeedType; lang: Lan
   );
 }
 
+/** Cards with no FREE/PAID badge (no official price) get one plain line from the facts instead. */
+const INFO_NOTE: Partial<Record<NeedType, TKey>> = { medical: "noteMedical", escort: "noteEscort" };
+
 /** Every kind of help, browsable without typing. */
 function ServicesView({ lang, disabled, onAsk, onChat }: { lang: LangCode; disabled: boolean; onAsk: (type: NeedType) => void; onChat: () => void }) {
   const call = helplineContacts().find((c) => c.kind === "phone");
@@ -586,9 +589,22 @@ function ServicesView({ lang, disabled, onAsk, onChat }: { lang: LangCode; disab
           )}
         </div>
       </section>
-      <div className="mt-5 gap-3 md:columns-2">
+      <nav aria-label={t(lang, "jumpTo")} className="scroll-quiet -mx-4 mt-4 flex gap-2 overflow-x-auto px-4 pb-1 md:mx-0 md:flex-wrap md:px-0">
         {PLANNABLE.map((type) => (
-          <div key={type} className="mb-3 flex min-w-0 break-inside-avoid flex-col rounded-2xl border border-line bg-card p-5 shadow-sm transition hover:shadow-md">
+          <button
+            key={type}
+            type="button"
+            onClick={() => document.getElementById(`svc-${type}`)?.scrollIntoView({ behavior: "smooth", block: "start" })}
+            className="flex min-h-12 shrink-0 items-center gap-2 rounded-full border border-line bg-card px-4 text-[1rem] font-semibold text-brand-900 transition hover:border-brand-800 active:scale-[0.97]"
+          >
+            <NeedIcon type={type} className="h-5 w-5 text-accent-600" />
+            {needLabel(lang, type)}
+          </button>
+        ))}
+      </nav>
+      <div className="mt-4 gap-3 md:columns-2">
+        {PLANNABLE.map((type) => (
+          <div key={type} id={`svc-${type}`} className="mb-3 flex min-w-0 scroll-mt-4 break-inside-avoid flex-col rounded-2xl border border-line bg-card p-5 shadow-sm transition hover:shadow-md">
             <div className="flex items-start gap-3">
               <span className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl bg-accent-50 text-accent-600">
                 <NeedIcon type={type} className="h-7 w-7" />
@@ -598,7 +614,7 @@ function ServicesView({ lang, disabled, onAsk, onChat }: { lang: LangCode; disab
                   <h2 className="text-[1.25rem] font-bold leading-tight text-ink">{needLabel(lang, type)}</h2>
                   <CostBadge type={type} lang={lang} />
                 </div>
-                {SERVICE_COST[type] && <p className="mt-1 text-[0.9375rem] leading-snug text-muted">{t(lang, SERVICE_COST[type]!.note)}</p>}
+                <p className="mt-1 text-[0.9375rem] leading-snug text-muted">{t(lang, SERVICE_COST[type]?.note ?? INFO_NOTE[type] ?? "genericInstruction")}</p>
               </div>
             </div>
             <div className="mt-4 flex-1 border-t border-line pt-3">
