@@ -456,7 +456,7 @@ export function ChatApp() {
                     mic.state === "recording" ? "pulse-ring bg-red-600 text-red-600" : "bg-accent-500 hover:bg-accent-600"
                   }`}
                 >
-                  <span className={`relative ${mic.state === "recording" ? "text-white" : "text-[#201b17]"}`}>{mic.state === "recording" ? <StopIcon className="h-6 w-6" /> : <MicIcon className="h-7 w-7" />}</span>
+                  <span className="relative text-white">{mic.state === "recording" ? <StopIcon className="h-6 w-6" /> : <MicIcon className="h-7 w-7" />}</span>
                 </button>
                 <textarea
                   id="chat-input"
@@ -569,7 +569,7 @@ function ServicesView({ lang, disabled, onAsk, onChat }: { lang: LangCode; disab
           <button
             type="button"
             onClick={onChat}
-            className="flex min-h-14 items-center justify-center gap-2 rounded-2xl bg-accent-500 px-5 text-[1.0625rem] font-bold text-[#201b17] transition hover:opacity-90 active:scale-[0.98]"
+            className="flex min-h-14 items-center justify-center gap-2 rounded-2xl bg-brand-800 px-5 text-[1.0625rem] font-bold text-white transition hover:opacity-90 active:scale-[0.98]"
           >
             <MicIcon className="h-5 w-5" />
             {t(lang, "askOwnWords")}
