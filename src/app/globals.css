@@ -5,8 +5,8 @@
 :root {
   color-scheme: light;
   /* Rail maroon: brand, headings, primary buttons */
-  --ra-brand-950: #2a0a0f;
-  --ra-brand-900: #431219;
+  --ra-brand-950: #2a0008;
+  --ra-brand-900: #3e000c;
   --ra-brand-800: #6b1623; /* matches the logo */
   --ra-brand-700: #8c2c38;
   /* Warm sand tints (backgrounds, tracks, chips) */
@@ -34,8 +34,8 @@
   --ra-brand-900: #f1cfc6;
   --ra-brand-800: #c95663;
   --ra-brand-700: #e08a93;
-  --ra-brand-100: #3b2c2a;
-  --ra-brand-50: #2b1f1d;
+  --ra-brand-100: #5a0f1c;
+  --ra-brand-50: #3e000c;
   --ra-accent-600: #f3a95a;
   --ra-accent-500: #c0640f;
   --ra-accent-100: #4d3219;
