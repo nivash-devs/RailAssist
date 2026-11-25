@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { BotReply, ChatMessage, ChatNeed, Where } from "@/lib/chat";
 import { offlineReply, PLANNABLE } from "@/lib/chat";
-import { generalLinks, helplineContacts, serviceContacts, SERVICE_COST } from "@/lib/contacts";
+import { contactHref, generalLinks, helplineContacts, serviceContacts, SERVICE_COST } from "@/lib/contacts";
 import { langDir, langName, LIMITED_AI, needLabel, t, type TKey } from "@/lib/i18n";
 import type { LangCode, NeedType } from "@/lib/types";
 import { ListIcon, MicIcon, NeedIcon, PhoneIcon, StopIcon } from "../Icons";
@@ -73,7 +73,7 @@ export function ChatApp() {
   const acct = useAccount();
   const userId = acct.user?.uid ?? null;
   const [guest, setGuest] = useState<boolean | null>(null);
-  const [view, setView] = useState<View>("ask");
+  const [view, setView] = useState<View>("services");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [text, setText] = useState("");
@@ -114,13 +114,13 @@ export function ChatApp() {
   }, [messages, loaded, busy, view, mode]);
 
   /** Open a saved chat, or a fresh empty one. */
-  const openChat = (id: string, isNew: boolean) => {
+  const openChat = (id: string, isNew: boolean, show = true) => {
     activeRef.current = id;
     setActiveId(id);
     setMessages([]);
     setNotice(null);
     setDrawer(false);
-    setView("ask");
+    if (show) setView("ask");
     if (isNew || !userId) {
       savedKey.current = `${id}:0`;
       setLoaded(true);
@@ -151,7 +151,7 @@ export function ChatApp() {
         setChats(list);
         if (first) {
           first = false;
-          openChat(list[0]?.id ?? uid(), !list.length);
+          openChat(list[0]?.id ?? uid(), !list.length, false);
         }
       },
       () => setNotice(t(lang, "saveFail")),
@@ -341,7 +341,15 @@ export function ChatApp() {
 
       {inApp && view === "services" && (
         <main className="scroll-quiet min-h-0 flex-1 overflow-y-auto px-4 py-5 lg:px-8 lg:py-8" lang={lang} dir={langDir(lang)}>
-          <ServicesView lang={lang} disabled={working} onAsk={(type) => void send(t(lang, "askTopic", { topic: needLabel(lang, type) }))} />
+          <ServicesView
+            lang={lang}
+            disabled={working}
+            onAsk={(type) => void send(t(lang, "askTopic", { topic: needLabel(lang, type) }))}
+            onChat={() => {
+              setView("ask");
+              setTimeout(() => inputRef.current?.focus(), 50);
+            }}
+          />
         </main>
       )}
 
@@ -549,11 +557,35 @@ function CostBadge({ type, lang, withNote = false }: { type: NeedType; lang: Lan
 }
 
 /** Every kind of help, browsable without typing. */
-function ServicesView({ lang, disabled, onAsk }: { lang: LangCode; disabled: boolean; onAsk: (type: NeedType) => void }) {
+function ServicesView({ lang, disabled, onAsk, onChat }: { lang: LangCode; disabled: boolean; onAsk: (type: NeedType) => void; onChat: () => void }) {
+  const call = helplineContacts().find((c) => c.kind === "phone");
+  const callHref = call ? contactHref(call) : null;
   return (
     <div className="mx-auto w-full max-w-5xl">
-      <h1 className="text-[1.375rem] font-bold text-brand-900">{t(lang, "servicesTitle")}</h1>
-      <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2">
+      <section className="rounded-3xl bg-brand-800 px-5 py-6 text-white lg:px-8 lg:py-8">
+        <h1 className="text-[1.625rem] font-extrabold leading-tight lg:text-[2rem]">{t(lang, "servicesTitle")}</h1>
+        <p className="mt-2 max-w-2xl text-[1.0625rem] leading-snug text-white/90 lg:text-[1.1875rem]">{t(lang, "servicesIntro")}</p>
+        <div className="mt-5 flex flex-col gap-2 sm:flex-row">
+          <button
+            type="button"
+            onClick={onChat}
+            className="flex min-h-14 items-center justify-center gap-2 rounded-2xl bg-white px-5 text-[1.0625rem] font-bold text-brand-800 transition hover:opacity-90 active:scale-[0.98]"
+          >
+            <MicIcon className="h-5 w-5" />
+            {t(lang, "askOwnWords")}
+          </button>
+          {call && callHref && (
+            <a
+              href={callHref}
+              className="flex min-h-14 items-center justify-center gap-2 rounded-2xl border-2 border-white/70 px-5 text-[1.0625rem] font-bold text-white transition hover:bg-white/10 active:scale-[0.98]"
+            >
+              <PhoneIcon className="h-5 w-5" />
+              {t(lang, "callNumber", { number: call.value })}
+            </a>
+          )}
+        </div>
+      </section>
+      <div className="mt-5 grid grid-cols-1 gap-3 md:grid-cols-2">
         {PLANNABLE.map((type) => (
           <div key={type} className="flex min-w-0 flex-col rounded-2xl border border-line bg-card px-4 py-4">
             <div className="flex gap-3">
