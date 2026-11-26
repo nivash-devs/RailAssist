@@ -1,3 +1,6 @@
+"use client";
+
+import { useSyncExternalStore } from "react";
 import { type ContactOption, contactHref } from "@/lib/contacts";
 import { t } from "@/lib/i18n";
 import type { LangCode } from "@/lib/types";
@@ -11,11 +14,25 @@ function opensText(url: string, lang: LangCode): string {
   return t(lang, "opensSite", { site: host });
 }
 
+type Platform = "android" | "ios" | "other";
+
+/** Which phone is this? Desktop and unknown devices get "other" (also used on the server). */
+function detectPlatform(): Platform {
+  const ua = navigator.userAgent;
+  if (/iPhone|iPad|iPod/i.test(ua) || (/Macintosh/i.test(ua) && navigator.maxTouchPoints > 1)) return "ios";
+  if (/Android/i.test(ua)) return "android";
+  return "other";
+}
+const noSubscribe = () => () => {};
+
 /** Call / open / ask-at buttons so the passenger can arrange help themselves. */
 export function GetIt({ contacts, lang }: { contacts: ContactOption[]; lang: LangCode }) {
+  const platform = useSyncExternalStore<Platform>(noSubscribe, detectPlatform, () => "other");
+  // On a phone, show only its own store's app.
+  const shown = platform === "other" ? contacts : contacts.filter((c) => !c.platform || c.platform === platform);
   return (
     <div className="mt-2 space-y-2">
-      {contacts.map((c) => {
+      {shown.map((c) => {
         const href = contactHref(c);
         if (c.kind === "counter" || !href)
           return (
@@ -28,7 +45,9 @@ export function GetIt({ contacts, lang }: { contacts: ContactOption[]; lang: Lan
             </div>
           );
         const isPhone = c.kind === "phone";
-        const label = c.labelKey ? t(lang, c.labelKey) : c.label;
+        let label = c.labelKey ? t(lang, c.labelKey) : c.label;
+        // One app button left: "(Android)" / "(iPhone)" is no longer needed.
+        if (c.platform && platform !== "other") label = label.replace(/\s*\((Android|iPhone)\)/, "");
         return (
           <a
             key={c.kind + c.value}

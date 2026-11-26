@@ -25,6 +25,8 @@ export interface ContactOption {
   i18nKey?: TKey;
   /** Translation key shown instead of `label`. */
   labelKey?: TKey;
+  /** App store this link is for. Only the phone's own store is shown; other devices see both. */
+  platform?: "android" | "ios";
   /** The app's official store icon, in /public. */
   icon?: string;
 }
@@ -69,8 +71,8 @@ export const SERVICE_CONTACTS: Record<NeedType, ContactOption[]> = {
   meal: [
     { kind: "phone", label: "Order food to your seat (IRCTC eCatering)", labelKey: "ctFoodPhone", value: "1323", source: "https://www.ecatering.irctc.co.in/" },
     { kind: "website", label: "Order food online (IRCTC eCatering)", labelKey: "ctFoodOnline", value: "https://www.ecatering.irctc.co.in/", source: "https://www.ecatering.irctc.co.in/" },
-    { kind: "app", label: "Food on Track app (Android)", labelKey: "ctFotAndroid", value: "https://play.google.com/store/apps/details?id=com.irctc.fot", source: "https://play.google.com/store/apps/details?id=com.irctc.fot", icon: "/icons/food-on-track.png" },
-    { kind: "app", label: "Food on Track app (iPhone)", labelKey: "ctFotIphone", value: "https://apps.apple.com/in/app/irctc-catering-food-on-track/id1077183717", source: "https://apps.apple.com/in/app/irctc-catering-food-on-track/id1077183717", icon: "/icons/food-on-track.png" },
+    { kind: "app", label: "Food on Track app (Android)", labelKey: "ctFotAndroid", platform: "android", value: "https://play.google.com/store/apps/details?id=com.irctc.fot", source: "https://play.google.com/store/apps/details?id=com.irctc.fot", icon: "/icons/food-on-track.png" },
+    { kind: "app", label: "Food on Track app (iPhone)", labelKey: "ctFotIphone", platform: "ios", value: "https://apps.apple.com/in/app/irctc-catering-food-on-track/id1077183717", source: "https://apps.apple.com/in/app/irctc-catering-food-on-track/id1077183717", icon: "/icons/food-on-track.png" },
   ],
   medical: [
     // 139: press 1 for medical/security help (PIB 8 Mar 2021, Rail Madad site).
@@ -98,8 +100,8 @@ export const SERVICE_COST: Partial<Record<NeedType, { cost: Cost; note: "costWhe
 
 /** Shown on the welcome screen. */
 export const GENERAL_LINKS: ContactOption[] = [
-  { kind: "app", label: "RailOne app (Android)", labelKey: "ctRailOneAndroid", value: "https://play.google.com/store/apps/details?id=org.cris.aikyam", source: "https://play.google.com/store/apps/details?id=org.cris.aikyam" },
-  { kind: "app", label: "RailOne app (iPhone)", labelKey: "ctRailOneIphone", value: "https://apps.apple.com/in/app/railone/id6473384334", source: "https://apps.apple.com/in/app/railone/id6473384334" },
+  { kind: "app", label: "RailOne app (Android)", labelKey: "ctRailOneAndroid", platform: "android", value: "https://play.google.com/store/apps/details?id=org.cris.aikyam", source: "https://play.google.com/store/apps/details?id=org.cris.aikyam" },
+  { kind: "app", label: "RailOne app (iPhone)", labelKey: "ctRailOneIphone", platform: "ios", value: "https://apps.apple.com/in/app/railone/id6473384334", source: "https://apps.apple.com/in/app/railone/id6473384334" },
   { kind: "website", label: "Live train status (NTES)", labelKey: "ctNtes", value: "https://enquiry.indianrail.gov.in/mntes/", source: "https://enquiry.indianrail.gov.in/mntes/" },
   { kind: "website", label: "Rail Madad: help and complaints", labelKey: "ctRailMadad", value: "https://railmadad.indianrailways.gov.in", source: "https://railmadad.indianrailways.gov.in" },
   { kind: "website", label: "Facilities for seniors and Divyangjan (Govt of India)", labelKey: "ctFacilities", value: PIB_FACILITIES, source: PIB_FACILITIES },
