@@ -28,6 +28,7 @@ export function GetIt({ contacts, lang }: { contacts: ContactOption[]; lang: Lan
             </div>
           );
         const isPhone = c.kind === "phone";
+        const label = c.labelKey ? t(lang, c.labelKey) : c.label;
         return (
           <a
             key={c.kind + c.value}
@@ -46,10 +47,10 @@ export function GetIt({ contacts, lang }: { contacts: ContactOption[]; lang: Lan
             )}
             <span className="min-w-0 leading-tight">
               <span className="block text-[1.0625rem] font-bold">
-                {isPhone ? t(lang, "callNumber", { number: c.value }) : c.label}
+                {isPhone ? t(lang, "callNumber", { number: c.value }) : label}
               </span>
               <span className="block truncate text-sm text-muted">
-                {isPhone ? c.label : opensText(href, lang)}
+                {isPhone ? label : opensText(href, lang)}
               </span>
             </span>
           </a>

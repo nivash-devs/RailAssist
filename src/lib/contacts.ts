@@ -1,3 +1,4 @@
+import type { TKey } from "./i18n";
 import type { NeedType } from "./types";
 
 // ===========================================================================
@@ -20,8 +21,10 @@ export interface ContactOption {
   /** phone: digits; app/website: https URL; counter: where to go. */
   value: string;
   source: string;
-  /** Optional translation key (from i18n.ts) shown instead of `value`. */
-  i18nKey?: "enquiryCounter";
+  /** Translation key (i18n.ts) shown instead of `value` for a counter. */
+  i18nKey?: TKey;
+  /** Translation key shown instead of `label`. */
+  labelKey?: TKey;
   /** The app's official store icon, in /public. */
   icon?: string;
 }
@@ -31,7 +34,7 @@ const PIB_FACILITIES = "https://www.pib.gov.in/PressReleasePage.aspx?PRID=220157
 
 /** Shown once under every answer that lists help. */
 export const HELPLINE: ContactOption[] = [
-  { kind: "phone", label: "Rail Madad helpline (12 languages, any phone)", value: "139", source: "https://railmadad.indianrailways.gov.in" },
+  { kind: "phone", label: "Rail Madad helpline (12 languages, any phone)", labelKey: "ctHelpline", value: "139", source: "https://railmadad.indianrailways.gov.in" },
   {
     kind: "counter",
     label: "Station help",
@@ -42,39 +45,39 @@ export const HELPLINE: ContactOption[] = [
 ];
 
 /**
- * Per kind of help. Labels are English for now.
- * TODO(native-speaker review): translate labels if needed.
+ * Per kind of help. `label`/`value` are English (also given to the AI);
+ * the app shows the translated `labelKey`/`i18nKey` text.
  */
 export const SERVICE_CONTACTS: Record<NeedType, ContactOption[]> = {
   wheelchair: [
     // Online booking only at 19 big stations and needs the PNR. Free; refundable Rs 500 deposit + photo ID at pickup.
-    { kind: "website", label: "Book a wheelchair online (IRCTC, 19 big stations)", value: "https://www.irctctourism.com/wheelchair", source: "https://www.irctctourism.com/wheelchair" },
-    { kind: "counter", label: "Free wheelchairs at 5,868 stations", value: "the station enquiry counter or station manager (free wheelchair)", source: PIB_FACILITIES },
+    { kind: "website", label: "Book a wheelchair online (IRCTC, 19 big stations)", labelKey: "ctWheelchairOnline", value: "https://www.irctctourism.com/wheelchair", source: "https://www.irctctourism.com/wheelchair" },
+    { kind: "counter", label: "Free wheelchairs at 5,868 stations", value: "the station enquiry counter or station manager (free wheelchair)", i18nKey: "cvWheelchair", source: PIB_FACILITIES },
   ],
   porter: [
     // No national porter booking app. Licensed Sahayaks work at fixed rates shown at the station.
-    { kind: "counter", label: "Licensed porter (Sahayak)", value: "a licensed Sahayak at the station, at the fixed rate shown there", source: PIB_FACILITIES },
+    { kind: "counter", label: "Licensed porter (Sahayak)", value: "a licensed Sahayak at the station, at the fixed rate shown there", i18nKey: "cvSahayak", source: PIB_FACILITIES },
   ],
   battery_car: [
     // 196 battery cars at 79 stations, first come first served; no central booking.
-    { kind: "counter", label: "Battery car (79 stations)", value: "the station enquiry counter or station manager", source: PIB_FACILITIES },
+    { kind: "counter", label: "Battery car (79 stations)", value: "the station enquiry counter or station manager", i18nKey: "cvStationManager", source: PIB_FACILITIES },
   ],
   lower_berth: [
-    { kind: "website", label: "Book with the senior citizen / lower berth quota (IRCTC)", value: "https://www.irctc.co.in/nget/train-search", source: "https://www.irctc.co.in/nget/train-search" },
-    { kind: "website", label: "Divyangjan railway ID card (disability quota)", value: "https://divyangjanid.indianrail.gov.in/", source: "https://divyangjanid.indianrail.gov.in/" },
+    { kind: "website", label: "Book with the senior citizen / lower berth quota (IRCTC)", labelKey: "ctLowerBerth", value: "https://www.irctc.co.in/nget/train-search", source: "https://www.irctc.co.in/nget/train-search" },
+    { kind: "website", label: "Divyangjan railway ID card (disability quota)", labelKey: "ctDivyangId", value: "https://divyangjanid.indianrail.gov.in/", source: "https://divyangjanid.indianrail.gov.in/" },
   ],
   meal: [
-    { kind: "phone", label: "Order food to your seat (IRCTC eCatering)", value: "1323", source: "https://www.ecatering.irctc.co.in/" },
-    { kind: "website", label: "Order food online (IRCTC eCatering)", value: "https://www.ecatering.irctc.co.in/", source: "https://www.ecatering.irctc.co.in/" },
-    { kind: "app", label: "Food on Track app (Android)", value: "https://play.google.com/store/apps/details?id=com.irctc.fot", source: "https://play.google.com/store/apps/details?id=com.irctc.fot", icon: "/icons/food-on-track.png" },
-    { kind: "app", label: "Food on Track app (iPhone)", value: "https://apps.apple.com/in/app/irctc-catering-food-on-track/id1077183717", source: "https://apps.apple.com/in/app/irctc-catering-food-on-track/id1077183717", icon: "/icons/food-on-track.png" },
+    { kind: "phone", label: "Order food to your seat (IRCTC eCatering)", labelKey: "ctFoodPhone", value: "1323", source: "https://www.ecatering.irctc.co.in/" },
+    { kind: "website", label: "Order food online (IRCTC eCatering)", labelKey: "ctFoodOnline", value: "https://www.ecatering.irctc.co.in/", source: "https://www.ecatering.irctc.co.in/" },
+    { kind: "app", label: "Food on Track app (Android)", labelKey: "ctFotAndroid", value: "https://play.google.com/store/apps/details?id=com.irctc.fot", source: "https://play.google.com/store/apps/details?id=com.irctc.fot", icon: "/icons/food-on-track.png" },
+    { kind: "app", label: "Food on Track app (iPhone)", labelKey: "ctFotIphone", value: "https://apps.apple.com/in/app/irctc-catering-food-on-track/id1077183717", source: "https://apps.apple.com/in/app/irctc-catering-food-on-track/id1077183717", icon: "/icons/food-on-track.png" },
   ],
   medical: [
     // 139: press 1 for medical/security help (PIB 8 Mar 2021, Rail Madad site).
-    { kind: "website", label: "Rail Madad (help and complaints on the train)", value: "https://railmadad.indianrailways.gov.in", source: "https://railmadad.indianrailways.gov.in" },
+    { kind: "website", label: "Rail Madad (help and complaints on the train)", labelKey: "ctRailMadadTrain", value: "https://railmadad.indianrailways.gov.in", source: "https://railmadad.indianrailways.gov.in" },
   ],
   escort: [
-    { kind: "counter", label: "Help to reach your coach", value: "the station enquiry counter or station manager", source: PIB_FACILITIES },
+    { kind: "counter", label: "Help to reach your coach", value: "the station enquiry counter or station manager", i18nKey: "cvStationManager", source: PIB_FACILITIES },
   ],
   other: [],
 };
@@ -95,11 +98,11 @@ export const SERVICE_COST: Partial<Record<NeedType, { cost: Cost; note: "costWhe
 
 /** Shown on the welcome screen. */
 export const GENERAL_LINKS: ContactOption[] = [
-  { kind: "app", label: "RailOne app (Android)", value: "https://play.google.com/store/apps/details?id=org.cris.aikyam", source: "https://play.google.com/store/apps/details?id=org.cris.aikyam" },
-  { kind: "app", label: "RailOne app (iPhone)", value: "https://apps.apple.com/in/app/railone/id6473384334", source: "https://apps.apple.com/in/app/railone/id6473384334" },
-  { kind: "website", label: "Live train status (NTES)", value: "https://enquiry.indianrail.gov.in/mntes/", source: "https://enquiry.indianrail.gov.in/mntes/" },
-  { kind: "website", label: "Rail Madad: help and complaints", value: "https://railmadad.indianrailways.gov.in", source: "https://railmadad.indianrailways.gov.in" },
-  { kind: "website", label: "Facilities for seniors and Divyangjan (Govt of India)", value: PIB_FACILITIES, source: PIB_FACILITIES },
+  { kind: "app", label: "RailOne app (Android)", labelKey: "ctRailOneAndroid", value: "https://play.google.com/store/apps/details?id=org.cris.aikyam", source: "https://play.google.com/store/apps/details?id=org.cris.aikyam" },
+  { kind: "app", label: "RailOne app (iPhone)", labelKey: "ctRailOneIphone", value: "https://apps.apple.com/in/app/railone/id6473384334", source: "https://apps.apple.com/in/app/railone/id6473384334" },
+  { kind: "website", label: "Live train status (NTES)", labelKey: "ctNtes", value: "https://enquiry.indianrail.gov.in/mntes/", source: "https://enquiry.indianrail.gov.in/mntes/" },
+  { kind: "website", label: "Rail Madad: help and complaints", labelKey: "ctRailMadad", value: "https://railmadad.indianrailways.gov.in", source: "https://railmadad.indianrailways.gov.in" },
+  { kind: "website", label: "Facilities for seniors and Divyangjan (Govt of India)", labelKey: "ctFacilities", value: PIB_FACILITIES, source: PIB_FACILITIES },
 ];
 
 const filled = (list: ContactOption[] = []) => list.filter((c) => c.value.trim());

@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import type { BotReply, ChatMessage, ChatNeed, Where } from "@/lib/chat";
 import { offlineReply, PLANNABLE } from "@/lib/chat";
 import { contactHref, generalLinks, helplineContacts, serviceContacts, SERVICE_COST } from "@/lib/contacts";
-import { langDir, langName, LIMITED_AI, needLabel, t, type TKey } from "@/lib/i18n";
+import { langDir, langName, LIMITED_AI, looksLikeLang, needInstruction, needLabel, t, type TKey } from "@/lib/i18n";
 import type { LangCode, NeedType } from "@/lib/types";
 import { ListIcon, MicIcon, NeedIcon, PhoneIcon, StopIcon } from "../Icons";
 import { LangPicker } from "../LangPicker";
@@ -732,9 +732,11 @@ function NeedCard({ need, lang, delay }: { need: ChatNeed; lang: LangCode; delay
         </span>
         <div className="min-w-0 flex-1">
           {whereKey && <div className="text-sm font-semibold text-accent-600">{t(lang, whereKey)}</div>}
-          <div className="text-lg font-bold leading-tight text-ink">{need.title || needLabel(lang, need.type)}</div>
+          <div className="text-lg font-bold leading-tight text-ink">{need.title && looksLikeLang(need.title, lang) ? need.title : needLabel(lang, need.type)}</div>
           <CostBadge type={need.type} lang={lang} withNote />
-          <p className="mt-1 text-[1rem] leading-snug text-muted [overflow-wrap:anywhere]">{need.instruction}</p>
+          <p className="mt-1 text-[1rem] leading-snug text-muted [overflow-wrap:anywhere]">
+            {need.instruction && looksLikeLang(need.instruction, lang) ? need.instruction : needInstruction(lang, need.type)}
+          </p>
         </div>
       </div>
       {links.length > 0 && (

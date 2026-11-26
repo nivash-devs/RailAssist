@@ -1,5 +1,5 @@
 import { NEED_TYPES, type LangCode, type NeedType } from "./types";
-import { needLabel, t } from "./i18n";
+import { needInstruction, needLabel, t } from "./i18n";
 import { isAbusive } from "./profanity";
 
 /** Where the passenger needs the help. */
@@ -137,7 +137,7 @@ export function offlineReply(text: string, lang: LangCode): BotReply {
   return {
     understood: true,
     reply: t(lang, "offlineReply"),
-    needs: found.map((type) => ({ type, where: DEFAULT_WHERE[type], title: needLabel(lang, type), instruction: t(lang, "genericInstruction") })),
+    needs: found.map((type) => ({ type, where: DEFAULT_WHERE[type], title: needLabel(lang, type), instruction: needInstruction(lang, type) })),
     notPossible: [],
     source: "offline",
   };
