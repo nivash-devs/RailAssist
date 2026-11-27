@@ -304,6 +304,65 @@ export function ChatApp() {
     />
   );
 
+  // Before the first message: a ChatGPT-style landing with the input in the middle.
+  const landing = loaded && messages.length === 0 && !working;
+  const inputForm = (
+    <>
+      {notice && (
+        <div role="alert" className="anim-fade-up mb-2 rounded-xl bg-accent-50 px-3 py-2 text-[0.9375rem] font-semibold text-accent-600">
+          {notice}
+        </div>
+      )}
+      <form
+        className="flex items-end gap-2"
+        onSubmit={(e) => {
+          e.preventDefault();
+          void send(text);
+        }}
+      >
+        <button
+          type="button"
+          onClick={mic.toggle}
+          disabled={busy || mic.state === "transcribing"}
+          aria-label={mic.state === "recording" ? t(lang, "listening") : t(lang, "tapToSpeak")}
+          className={`relative flex h-14 min-w-14 shrink-0 flex-col items-center justify-center gap-0.5 rounded-2xl px-2.5 text-white transition active:scale-95 disabled:opacity-50 ${
+            mic.state === "recording" ? "pulse-ring bg-red-600 text-red-600" : "bg-accent-500 hover:bg-accent-600"
+          }`}
+        >
+          <span className="relative text-white">{mic.state === "recording" ? <StopIcon className="h-5 w-5" /> : <MicIcon className="h-6 w-6" />}</span>
+          <span className="relative text-[0.75rem] font-bold leading-none text-white">{t(lang, mic.state === "recording" ? "stop" : "speak")}</span>
+        </button>
+        <textarea
+          id="chat-input"
+          ref={inputRef}
+          rows={1}
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && !e.shiftKey) {
+              e.preventDefault();
+              void send(text);
+            }
+          }}
+          dir="auto"
+          aria-label={t(lang, "typeMessage")}
+          placeholder={mic.state === "recording" ? t(lang, "listening") : t(lang, "typeMessage")}
+          className="max-h-32 min-h-14 flex-1 resize-none rounded-2xl border-2 border-line bg-paper px-4 py-3.5 text-[1.125rem] leading-snug text-ink outline-none focus:border-brand-700"
+        />
+        <button
+          type="submit"
+          disabled={!text.trim() || busy}
+          aria-label={t(lang, "send")}
+          className="grid h-14 w-14 shrink-0 place-items-center rounded-full bg-brand-800 text-white transition active:scale-95 disabled:bg-brand-100 disabled:text-brand-700/50"
+        >
+          <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+            <path d="M5 12h14M13 6l6 6-6 6" />
+          </svg>
+        </button>
+      </form>
+    </>
+  );
+
   return (
     <div className="relative flex h-dvh w-full flex-col bg-paper">
       <header className="shrink-0 border-b border-line bg-card">
@@ -378,6 +437,43 @@ export function ChatApp() {
               </button>
             </div>
           )}
+          {landing && (
+            <main className="scroll-quiet flex min-h-0 flex-1 flex-col items-center justify-center overflow-y-auto px-4 py-6 lg:px-8" lang={lang} dir={langDir(lang)}>
+              <div className="anim-fade-up w-full max-w-2xl">
+                <h1 className="text-center text-[1.625rem] font-extrabold leading-tight text-brand-900 lg:text-[2rem]">{t(lang, "welcome")}</h1>
+                {LIMITED_AI.includes(lang) && (
+                  <p className="mt-3 rounded-xl bg-accent-50 px-3 py-2 text-center text-[0.9375rem] font-semibold text-accent-600">{t(lang, "limitedLang", { language: langName(lang) })}</p>
+                )}
+                <div className="mt-6">{inputForm}</div>
+                <div className="mt-4 flex flex-wrap justify-center gap-2">
+                  {SUGGESTIONS.map((k) => (
+                    <button
+                      key={k}
+                      type="button"
+                      onClick={() => void send(t(lang, k))}
+                      className="min-h-12 rounded-full border-2 border-brand-800/20 bg-card px-4 py-2 text-[1rem] font-semibold text-brand-800 transition hover:border-brand-800 active:scale-[0.97]"
+                    >
+                      {t(lang, k)}
+                    </button>
+                  ))}
+                </div>
+                <p className="mt-5 text-center text-sm text-muted">{privacy}</p>
+                {mode === "local" && acct.enabled && (
+                  <div className="mt-3 flex justify-center">
+                    <button
+                      type="button"
+                      onClick={() => void googleSignIn().catch(() => setNotice(t(lang, "signInFail")))}
+                      className="flex min-h-12 items-center gap-2 rounded-xl border-2 border-brand-800 bg-white px-3 text-[0.9375rem] font-bold text-[#201b17]"
+                    >
+                      <GoogleG className="h-5 w-5" />
+                      {t(lang, "signInToSave")}
+                    </button>
+                  </div>
+                )}
+              </div>
+            </main>
+          )}
+          {!landing && (
           <main className="scroll-quiet flex min-h-0 flex-1 flex-col overflow-y-auto px-4 pb-4 pt-4 lg:px-8 lg:pt-8" lang={lang} dir={langDir(lang)}>
             <div className="mx-auto flex w-full max-w-3xl flex-col">
               <BotBubble>
@@ -431,62 +527,13 @@ export function ChatApp() {
               <div ref={endRef} />
             </div>
           </main>
+          )}
 
-          {/* Input bar */}
+          {/* Input bar (once the chat has started) */}
+          {!landing && (
           <div className="shrink-0 border-t border-line bg-card px-3 pb-3 pt-2.5 lg:px-8 lg:pb-5 lg:pt-4">
             <div className="mx-auto w-full max-w-3xl">
-              {notice && (
-                <div role="alert" className="anim-fade-up mb-2 rounded-xl bg-accent-50 px-3 py-2 text-[0.9375rem] font-semibold text-accent-600">
-                  {notice}
-                </div>
-              )}
-              <form
-                className="flex items-end gap-2"
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  void send(text);
-                }}
-              >
-                <button
-                  type="button"
-                  onClick={mic.toggle}
-                  disabled={busy || mic.state === "transcribing"}
-                  aria-label={mic.state === "recording" ? t(lang, "listening") : t(lang, "tapToSpeak")}
-                  className={`relative flex h-14 min-w-14 shrink-0 flex-col items-center justify-center gap-0.5 rounded-2xl px-2.5 text-white transition active:scale-95 disabled:opacity-50 ${
-                    mic.state === "recording" ? "pulse-ring bg-red-600 text-red-600" : "bg-accent-500 hover:bg-accent-600"
-                  }`}
-                >
-                  <span className="relative text-white">{mic.state === "recording" ? <StopIcon className="h-5 w-5" /> : <MicIcon className="h-6 w-6" />}</span>
-                  <span className="relative text-[0.75rem] font-bold leading-none text-white">{t(lang, mic.state === "recording" ? "stop" : "speak")}</span>
-                </button>
-                <textarea
-                  id="chat-input"
-                  ref={inputRef}
-                  rows={1}
-                  value={text}
-                  onChange={(e) => setText(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" && !e.shiftKey) {
-                      e.preventDefault();
-                      void send(text);
-                    }
-                  }}
-                  dir="auto"
-                  aria-label={t(lang, "typeMessage")}
-                  placeholder={mic.state === "recording" ? t(lang, "listening") : t(lang, "typeMessage")}
-                  className="max-h-32 min-h-14 flex-1 resize-none rounded-2xl border-2 border-line bg-paper px-4 py-3.5 text-[1.125rem] leading-snug text-ink outline-none focus:border-brand-700"
-                />
-                <button
-                  type="submit"
-                  disabled={!text.trim() || busy}
-                  aria-label={t(lang, "send")}
-                  className="grid h-14 w-14 shrink-0 place-items-center rounded-full bg-brand-800 text-white transition active:scale-95 disabled:bg-brand-100 disabled:text-brand-700/50"
-                >
-                  <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-                    <path d="M5 12h14M13 6l6 6-6 6" />
-                  </svg>
-                </button>
-              </form>
+              {inputForm}
               {mode === "local" && messages.length > 0 && (
                 <button type="button" onClick={newChat} className="mt-1 min-h-12 w-full text-center text-[0.9375rem] font-semibold text-muted hover:text-brand-800">
                   {t(lang, "newChat")}
@@ -494,6 +541,7 @@ export function ChatApp() {
               )}
             </div>
           </div>
+          )}
           </section>
         </div>
       )}
