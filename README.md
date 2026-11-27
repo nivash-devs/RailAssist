@@ -13,7 +13,7 @@ RailAssist is a chatbot that helps elderly and disabled Indian Railways passenge
   - Screen text is translated for 14 languages; Bodo, Dogri, Maithili and Sanskrit show Hindi, Konkani shows Marathi, Kashmiri and Sindhi show Urdu, Manipuri and Santali show English.
 - **Rename, new chat, delete:** signed-in people can rename any saved chat.
 
-Live: https://railassist-ideathon.vercel.app (same chatbot on phone and PC).
+Live: https://railassist.in (same chatbot on phone and PC).
 
 ## Setup
 
@@ -40,9 +40,9 @@ The key is only used by the server (`/api/chat`, `/api/transcribe`) and is never
 
 ## Using it
 
-1. Pick your language at the top.
-2. Tap the orange microphone and speak, or type. You can also tap a suggestion such as "I need a wheelchair at the station".
-3. RailAssist replies with:
+1. Pick your language at the top. Text starts one step bigger (A+); the **A** button in the header cycles the size.
+2. The app opens on **Ask**: type in the box in the middle of the screen, or tap the microphone icon inside it and speak. A live bar moves while you talk; tap the stop icon when done. On bigger screens you can also tap a suggestion such as "I need a wheelchair at the station". If the microphone is blocked, the app tells you how to allow it.
+3. RailAssist types its answer out letter by letter (tap it to show all at once), then shows:
    - a short answer,
    - a card for each kind of help (where you need it: at the station you get on, where you get off, or on the train),
    - **How to get it today** buttons: official websites, apps and numbers (tap to call or open),
@@ -76,7 +76,7 @@ UI text is in `src/lib/i18n.ts`. Hindi is complete. The other languages cover th
 ## How it works
 
 - `src/components/chat/ChatApp.tsx`: the chat screen (voice, suggestions, answer cards, saved on this device).
-- `src/app/api/chat/route.ts`: sends the conversation to the Groq chat model in JSON mode, checks the reply (`src/lib/chat.ts`), retries once, and falls back to the offline helper. It waits and retries once on Groq's free-tier rate limit (about 8,000 tokens per minute, roughly 4–5 answers).
+- `src/app/api/chat/route.ts`: sends the conversation to the Groq chat model in JSON mode with medium reasoning effort, checks the reply (`src/lib/chat.ts`), retries once, and falls back to the offline helper. It waits and retries once on Groq's free-tier rate limit (about 8,000 tokens per minute, roughly 4–5 answers).
 - `src/app/api/transcribe/route.ts`: speech to text with Groq Whisper, in the chosen language.
 - `src/lib/config.ts`: model IDs (`whisper-large-v3-turbo`, `openai/gpt-oss-120b`).
 

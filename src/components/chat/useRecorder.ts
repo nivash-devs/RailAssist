@@ -4,9 +4,12 @@ import { useEffect, useRef, useState } from "react";
 import type { LangCode } from "@/lib/types";
 
 export type MicState = "idle" | "recording" | "transcribing";
-type MicError = "micError" | "transcribeError";
+type MicError = "micError" | "micBlocked" | "transcribeError";
 
 const MAX_RECORD_MS = 30_000;
+/** How many bars the live level meter shows. */
+export const METER_BARS = 28;
+const EMPTY_BARS: number[] = Array(METER_BARS).fill(0);
 
 function pickMime(): string | undefined {
   if (typeof MediaRecorder === "undefined") return undefined;
@@ -21,9 +24,48 @@ export function useRecorder(lang: LangCode, onText: (text: string) => void, onEr
   const [state, setState] = useState<MicState>("idle");
   const recRef = useRef<MediaRecorder | null>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const meterRef = useRef<(() => void) | null>(null);
+  // 0..1 loudness of the last moments, oldest first, drawn as the live bar while recording.
+  const [bars, setBars] = useState<number[]>(EMPTY_BARS);
+
+  /** Listen to the mic level and feed it to the bars. Returns a function that stops it. */
+  const startMeter = (stream: MediaStream) => {
+    const Ctx = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+    if (!Ctx) return;
+    const ctx = new Ctx();
+    const analyser = ctx.createAnalyser();
+    analyser.fftSize = 512;
+    ctx.createMediaStreamSource(stream).connect(analyser);
+    const data = new Uint8Array(analyser.fftSize);
+    let history = EMPTY_BARS;
+    let raf = 0;
+    let last = 0;
+    const tick = (now: number) => {
+      raf = requestAnimationFrame(tick);
+      if (now - last < 55) return;
+      last = now;
+      analyser.getByteTimeDomainData(data);
+      let sum = 0;
+      for (let i = 0; i < data.length; i++) {
+        const v = (data[i] - 128) / 128;
+        sum += v * v;
+      }
+      const level = Math.min(1, Math.sqrt(sum / data.length) * 5);
+      history = [...history.slice(1), level];
+      setBars(history);
+    };
+    raf = requestAnimationFrame(tick);
+    meterRef.current = () => {
+      cancelAnimationFrame(raf);
+      void ctx.close().catch(() => {});
+      meterRef.current = null;
+      setBars(EMPTY_BARS);
+    };
+  };
 
   useEffect(
     () => () => {
+      meterRef.current?.();
       if (timerRef.current) clearTimeout(timerRef.current);
       recRef.current?.stream.getTracks().forEach((tr) => tr.stop());
     },
@@ -40,14 +82,17 @@ export function useRecorder(lang: LangCode, onText: (text: string) => void, onEr
     let stream: MediaStream;
     try {
       stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    } catch {
-      return fail("micError");
+    } catch (e) {
+      // Permission denied or blocked by the browser: tell them how to allow it. Anything else (no mic found): the generic message.
+      const name = (e as { name?: string })?.name;
+      return fail(name === "NotAllowedError" || name === "SecurityError" ? "micBlocked" : "micError");
     }
     const mime = pickMime();
     const rec = mime ? new MediaRecorder(stream, { mimeType: mime }) : new MediaRecorder(stream);
     const chunks: Blob[] = [];
     rec.ondataavailable = (e) => e.data.size && chunks.push(e.data);
     rec.onstop = async () => {
+      meterRef.current?.();
       stream.getTracks().forEach((tr) => tr.stop());
       if (timerRef.current) clearTimeout(timerRef.current);
       const blob = new Blob(chunks, { type: rec.mimeType || mime || "audio/webm" });
@@ -68,6 +113,7 @@ export function useRecorder(lang: LangCode, onText: (text: string) => void, onEr
     };
     recRef.current = rec;
     rec.start();
+    startMeter(stream);
     setState("recording");
     timerRef.current = setTimeout(() => rec.state === "recording" && rec.stop(), MAX_RECORD_MS);
   };
@@ -77,5 +123,5 @@ export function useRecorder(lang: LangCode, onText: (text: string) => void, onEr
     else if (state === "idle") void start();
   };
 
-  return { state, toggle };
+  return { state, toggle, bars };
 }

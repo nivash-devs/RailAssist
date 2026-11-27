@@ -37,7 +37,7 @@ async function askGroq(key: string, messages: GroqMessage[]): Promise<unknown> {
         messages,
         temperature: 0.3,
         max_completion_tokens: 1500,
-        reasoning_effort: "low",
+        reasoning_effort: "medium",
         response_format: { type: "json_object" },
       }),
       signal: AbortSignal.timeout(30_000),

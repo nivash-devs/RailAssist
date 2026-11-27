@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { BotReply, ChatMessage, ChatNeed, Where } from "@/lib/chat";
 import { offlineReply, PLANNABLE } from "@/lib/chat";
 import { contactHref, generalLinks, helplineContacts, serviceContacts, SERVICE_COST } from "@/lib/contacts";
@@ -79,6 +79,7 @@ export function ChatApp() {
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
+  const [typingId, setTypingId] = useState<string | null>(null);
   const [chats, setChats] = useState<ChatMeta[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [drawer, setDrawer] = useState(false);
@@ -210,7 +211,9 @@ export function ChatApp() {
       // No connection: answer on this device so the chat never dead-ends.
       reply = offlineReply(content, lang);
     }
-    setMessages((m) => [...m, { id: uid(), role: "bot", text: reply.reply, bot: reply, ts: Date.now() }]);
+    const botId = uid();
+    setTypingId(botId);
+    setMessages((m) => [...m, { id: botId, role: "bot", text: reply.reply, bot: reply, ts: Date.now() }]);
     setBusy(false);
   };
 
@@ -314,51 +317,64 @@ export function ChatApp() {
         </div>
       )}
       <form
-        className="flex items-end gap-2"
+        className="flex items-end gap-1.5 rounded-[1.75rem] border-2 border-line bg-card p-1.5 shadow-sm transition focus-within:border-brand-700 sm:gap-2 sm:p-2"
         onSubmit={(e) => {
           e.preventDefault();
           void send(text);
         }}
       >
+        {mic.state === "recording" ? (
+          <div className="flex h-11 min-w-0 flex-1 items-center gap-3 pl-3 sm:h-12" role="status" aria-label={t(lang, "listening")}>
+            <div className="flex h-9 min-w-0 flex-1 items-center justify-center gap-[3px] overflow-hidden" aria-hidden>
+              {mic.bars.map((v, i) => (
+                <span key={i} className="w-[3px] shrink-0 rounded-full bg-red-500 transition-[height] duration-75" style={{ height: `${Math.max(12, Math.round(v * 100))}%` }} />
+              ))}
+            </div>
+            <span className="shrink-0 text-[0.9375rem] font-semibold text-muted">{t(lang, "listening")}</span>
+          </div>
+        ) : (
+          <textarea
+            id="chat-input"
+            ref={inputRef}
+            rows={1}
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                void send(text);
+              }
+            }}
+            dir="auto"
+            aria-label={t(lang, "typeMessage")}
+            placeholder={mic.state === "transcribing" ? t(lang, "transcribing") : t(lang, "typeMessage")}
+            className="max-h-32 min-h-11 min-w-0 flex-1 resize-none bg-transparent px-3 py-2.5 text-[1rem] leading-snug text-ink outline-none sm:min-h-12 sm:text-[1.125rem]"
+          />
+        )}
         <button
           type="button"
           onClick={mic.toggle}
           disabled={busy || mic.state === "transcribing"}
-          aria-label={mic.state === "recording" ? t(lang, "listening") : t(lang, "tapToSpeak")}
-          className={`relative flex h-12 min-w-12 shrink-0 flex-col items-center justify-center gap-0.5 rounded-2xl px-2 text-white sm:h-14 sm:min-w-14 sm:px-2.5 transition active:scale-95 disabled:opacity-50 ${
+          aria-label={mic.state === "recording" ? t(lang, "stop") : t(lang, "tapToSpeak")}
+          title={mic.state === "recording" ? t(lang, "stop") : t(lang, "tapToSpeak")}
+          className={`relative grid h-11 w-11 shrink-0 place-items-center rounded-full text-white transition active:scale-95 disabled:opacity-50 sm:h-12 sm:w-12 ${
             mic.state === "recording" ? "pulse-ring bg-red-600 text-red-600" : "bg-accent-500 hover:bg-accent-600"
           }`}
         >
           <span className="relative text-white">{mic.state === "recording" ? <StopIcon className="h-5 w-5" /> : <MicIcon className="h-6 w-6" />}</span>
-          <span className="relative text-[0.75rem] font-bold leading-none text-white">{t(lang, mic.state === "recording" ? "stop" : "speak")}</span>
         </button>
-        <textarea
-          id="chat-input"
-          ref={inputRef}
-          rows={1}
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && !e.shiftKey) {
-              e.preventDefault();
-              void send(text);
-            }
-          }}
-          dir="auto"
-          aria-label={t(lang, "typeMessage")}
-          placeholder={mic.state === "recording" ? t(lang, "listening") : t(lang, "typeMessage")}
-          className="max-h-32 min-h-12 flex-1 resize-none rounded-2xl border-2 border-line bg-paper px-3 py-2.5 text-[1rem] sm:min-h-14 sm:px-4 sm:py-3.5 sm:text-[1.125rem] leading-snug text-ink outline-none focus:border-brand-700"
-        />
-        <button
-          type="submit"
-          disabled={!text.trim() || busy}
-          aria-label={t(lang, "send")}
-          className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-brand-800 text-white transition active:scale-95 sm:h-14 sm:w-14 disabled:bg-brand-100 disabled:text-brand-700/50"
-        >
-          <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-            <path d="M5 12h14M13 6l6 6-6 6" />
-          </svg>
-        </button>
+        {mic.state !== "recording" && (
+          <button
+            type="submit"
+            disabled={!text.trim() || busy}
+            aria-label={t(lang, "send")}
+            className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-brand-800 text-white transition active:scale-95 disabled:bg-brand-100 disabled:text-brand-700/50 sm:h-12 sm:w-12"
+          >
+            <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+              <path d="M5 12h14M13 6l6 6-6 6" />
+            </svg>
+          </button>
+        )}
       </form>
     </>
   );
@@ -474,7 +490,7 @@ export function ChatApp() {
             </main>
           )}
           {!landing && (
-          <main className="scroll-quiet flex min-h-0 flex-1 flex-col overflow-y-auto px-4 pb-4 pt-4 lg:px-8 lg:pt-8" lang={lang} dir={langDir(lang)}>
+          <main className="scroll-quiet flex min-h-0 flex-1 flex-col overflow-y-auto px-3 pb-3 pt-3 sm:px-4 sm:pb-4 sm:pt-4 lg:px-8 lg:pt-8" lang={lang} dir={langDir(lang)}>
             <div className="mx-auto flex w-full max-w-3xl flex-col">
               <BotBubble>
                 <p className="text-[1.125rem] leading-snug text-ink">{t(lang, "welcome")}</p>
@@ -512,10 +528,17 @@ export function ChatApp() {
               {messages.map((m) =>
                 m.role === "user" ? (
                   <div key={m.id} className="anim-fade-up mt-3 flex justify-end">
-                    <div className="max-w-[85%] rounded-2xl rounded-br-md bg-brand-800 px-4 py-3 text-[1.125rem] leading-snug text-white [overflow-wrap:anywhere]">{m.text}</div>
+                    <div className="max-w-[88%] rounded-2xl rounded-br-md bg-brand-800 px-3 py-2.5 text-[1rem] leading-snug text-white [overflow-wrap:anywhere] sm:px-4 sm:py-3 sm:text-[1.125rem]">{m.text}</div>
                   </div>
                 ) : (
-                  <BotMessage key={m.id} reply={m.bot!} lang={lang} />
+                  <BotMessage
+                    key={m.id}
+                    reply={m.bot!}
+                    lang={lang}
+                    typing={m.id === typingId}
+                    onProgress={() => endRef.current?.scrollIntoView({ block: "end" })}
+                    onDone={() => setTypingId((id) => (id === m.id ? null : id))}
+                  />
                 ),
               )}
 
@@ -728,20 +751,70 @@ function HelpView({ lang, note }: { lang: LangCode; note: string }) {
 function BotBubble({ children }: { children: React.ReactNode }) {
   return (
     <div className="anim-fade-up mt-3 flex justify-start first:mt-0">
-      <div className="max-w-[92%] rounded-2xl rounded-bl-md border border-line bg-card px-4 py-3">{children}</div>
+      <div className="max-w-[96%] rounded-2xl rounded-bl-md border border-line bg-card px-3 py-2.5 sm:max-w-[92%] sm:px-4 sm:py-3">{children}</div>
     </div>
   );
 }
 
-function BotMessage({ reply, lang }: { reply: BotReply; lang: LangCode }) {
+/** Types a reply out letter by letter, like ChatGPT. Tap it to show the rest at once. */
+function TypedText({ text, onProgress, onDone }: { text: string; onProgress?: () => void; onDone?: () => void }) {
+  // Split into whole characters so letters like "कि" or emoji are never cut in half.
+  const chars = useMemo(() => {
+    const Seg = (Intl as unknown as { Segmenter?: new (l?: string, o?: { granularity: string }) => { segment: (s: string) => Iterable<{ segment: string }> } }).Segmenter;
+    return Seg ? Array.from(new Seg(undefined, { granularity: "grapheme" }).segment(text), (x) => x.segment) : Array.from(text);
+  }, [text]);
+  const [shown, setShown] = useState(0);
+  const startRef = useRef(0);
+  const cbRef = useRef({ onProgress, onDone });
+  useEffect(() => {
+    cbRef.current = { onProgress, onDone };
+  });
+
+  useEffect(() => {
+    // Reduced motion: finish on the first frame. Otherwise about 25 characters a second, never longer than 3.5 seconds.
+    const reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    const duration = reduce ? 0 : Math.min(3500, Math.max(500, chars.length * 40));
+    startRef.current = performance.now();
+    let raf = 0;
+    const tick = (now: number) => {
+      const k = duration === 0 ? chars.length : Math.min(chars.length, Math.ceil(((now - startRef.current) / duration) * chars.length));
+      setShown(k);
+      cbRef.current.onProgress?.();
+      if (k >= chars.length) cbRef.current.onDone?.();
+      else raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [chars]);
+
+  return (
+    <span onClick={() => (startRef.current = -1e9)} className="cursor-pointer">
+      {chars.slice(0, shown).join("")}
+      {shown < chars.length && <span aria-hidden className="anim-blink ml-0.5 inline-block h-[1em] w-0.5 translate-y-[0.15em] bg-brand-800" />}
+    </span>
+  );
+}
+
+function BotMessage({ reply, lang, typing = false, onProgress, onDone }: { reply: BotReply; lang: LangCode; typing?: boolean; onProgress?: () => void; onDone?: () => void }) {
   const helpline = helplineContacts();
   return (
     <div className="anim-fade-up mt-3 max-w-[96%] space-y-2">
       <BotBubble>
-        <p className="text-[1.125rem] leading-snug text-ink [overflow-wrap:anywhere]">{reply.reply}</p>
-        {!reply.understood && <p className="mt-2 text-[1rem] leading-snug text-muted">{t(lang, "canHelpWith")}</p>}
-        {reply.source === "offline" && reply.understood && <p className="mt-2 text-sm text-muted">{t(lang, "offlinePlan")}</p>}
+        <p className="text-[1rem] leading-snug text-ink [overflow-wrap:anywhere] sm:text-[1.125rem]">
+          {typing ? <TypedText text={reply.reply} onProgress={onProgress} onDone={onDone} /> : reply.reply}
+        </p>
+        {!typing && !reply.understood && <p className="mt-2 text-[1rem] leading-snug text-muted">{t(lang, "canHelpWith")}</p>}
+        {!typing && reply.source === "offline" && reply.understood && <p className="mt-2 text-sm text-muted">{t(lang, "offlinePlan")}</p>}
       </BotBubble>
+      {typing ? null : <BotExtras reply={reply} lang={lang} helpline={helpline} />}
+    </div>
+  );
+}
+
+/** The cards that come after the typed sentence: what is not possible, each kind of help, and the helpline. */
+function BotExtras({ reply, lang, helpline }: { reply: BotReply; lang: LangCode; helpline: ReturnType<typeof helplineContacts> }) {
+  return (
+    <>
 
       {reply.notPossible.length > 0 && (
         <div className="rounded-2xl border border-line bg-card px-4 py-3">
@@ -764,7 +837,7 @@ function BotMessage({ reply, lang }: { reply: BotReply; lang: LangCode }) {
           <GetIt contacts={helpline} lang={lang} />
         </div>
       )}
-    </div>
+    </>
   );
 }
 
@@ -773,16 +846,16 @@ function NeedCard({ need, lang, delay }: { need: ChatNeed; lang: LangCode; delay
   const whereKey = WHERE_KEY[need.where];
   const links = serviceContacts(need.type);
   return (
-    <div className="anim-fade-up rounded-2xl border border-line bg-card px-4 py-3" style={{ animationDelay: `${delay}ms` }}>
+    <div className="anim-fade-up rounded-2xl border border-line bg-card px-3 py-2.5 sm:px-4 sm:py-3" style={{ animationDelay: `${delay}ms` }}>
       <div className="flex gap-3">
-        <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-accent-50 text-accent-600">
-          <NeedIcon type={need.type} className="h-6 w-6" />
+        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-accent-50 text-accent-600 sm:h-11 sm:w-11">
+          <NeedIcon type={need.type} className="h-5 w-5 sm:h-6 sm:w-6" />
         </span>
         <div className="min-w-0 flex-1">
           {whereKey && <div className="text-sm font-semibold text-accent-600">{t(lang, whereKey)}</div>}
-          <div className="text-lg font-bold leading-tight text-ink">{need.title && looksLikeLang(need.title, lang) ? need.title : needLabel(lang, need.type)}</div>
+          <div className="text-[1.0625rem] font-bold leading-tight text-ink sm:text-lg">{need.title && looksLikeLang(need.title, lang) ? need.title : needLabel(lang, need.type)}</div>
           <CostBadge type={need.type} lang={lang} withNote />
-          <p className="mt-1 text-[1rem] leading-snug text-muted [overflow-wrap:anywhere]">
+          <p className="mt-1 text-[0.9375rem] leading-snug text-muted [overflow-wrap:anywhere] sm:text-[1rem]">
             {need.instruction && looksLikeLang(need.instruction, lang) ? need.instruction : needInstruction(lang, need.type)}
           </p>
         </div>
