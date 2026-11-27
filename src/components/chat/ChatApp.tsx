@@ -73,7 +73,7 @@ export function ChatApp() {
   const acct = useAccount();
   const userId = acct.user?.uid ?? null;
   const [guest, setGuest] = useState<boolean | null>(null);
-  const [view, setView] = useState<View>("services");
+  const [view, setView] = useState<View>("ask");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [text, setText] = useState("");
@@ -325,7 +325,7 @@ export function ChatApp() {
           onClick={mic.toggle}
           disabled={busy || mic.state === "transcribing"}
           aria-label={mic.state === "recording" ? t(lang, "listening") : t(lang, "tapToSpeak")}
-          className={`relative flex h-14 min-w-14 shrink-0 flex-col items-center justify-center gap-0.5 rounded-2xl px-2.5 text-white transition active:scale-95 disabled:opacity-50 ${
+          className={`relative flex h-12 min-w-12 shrink-0 flex-col items-center justify-center gap-0.5 rounded-2xl px-2 text-white sm:h-14 sm:min-w-14 sm:px-2.5 transition active:scale-95 disabled:opacity-50 ${
             mic.state === "recording" ? "pulse-ring bg-red-600 text-red-600" : "bg-accent-500 hover:bg-accent-600"
           }`}
         >
@@ -347,13 +347,13 @@ export function ChatApp() {
           dir="auto"
           aria-label={t(lang, "typeMessage")}
           placeholder={mic.state === "recording" ? t(lang, "listening") : t(lang, "typeMessage")}
-          className="max-h-32 min-h-14 flex-1 resize-none rounded-2xl border-2 border-line bg-paper px-4 py-3.5 text-[1.125rem] leading-snug text-ink outline-none focus:border-brand-700"
+          className="max-h-32 min-h-12 flex-1 resize-none rounded-2xl border-2 border-line bg-paper px-3 py-2.5 text-[1rem] sm:min-h-14 sm:px-4 sm:py-3.5 sm:text-[1.125rem] leading-snug text-ink outline-none focus:border-brand-700"
         />
         <button
           type="submit"
           disabled={!text.trim() || busy}
           aria-label={t(lang, "send")}
-          className="grid h-14 w-14 shrink-0 place-items-center rounded-full bg-brand-800 text-white transition active:scale-95 disabled:bg-brand-100 disabled:text-brand-700/50"
+          className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-brand-800 text-white transition active:scale-95 sm:h-14 sm:w-14 disabled:bg-brand-100 disabled:text-brand-700/50"
         >
           <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
             <path d="M5 12h14M13 6l6 6-6 6" />
@@ -440,18 +440,18 @@ export function ChatApp() {
           {landing && (
             <main className="scroll-quiet flex min-h-0 flex-1 flex-col items-center justify-center overflow-y-auto px-4 py-6 lg:px-8" lang={lang} dir={langDir(lang)}>
               <div className="anim-fade-up w-full max-w-2xl">
-                <h1 className="text-center text-[1.625rem] font-extrabold leading-tight text-brand-900 lg:text-[2rem]">{t(lang, "welcome")}</h1>
+                <h1 className="text-center text-[1.125rem] font-extrabold leading-snug text-brand-900 sm:text-[1.625rem] lg:text-[2rem]">{t(lang, "welcome")}</h1>
                 {LIMITED_AI.includes(lang) && (
                   <p className="mt-3 rounded-xl bg-accent-50 px-3 py-2 text-center text-[0.9375rem] font-semibold text-accent-600">{t(lang, "limitedLang", { language: langName(lang) })}</p>
                 )}
-                <div className="mt-6">{inputForm}</div>
-                <div className="mt-4 flex flex-wrap justify-center gap-2">
+                <div className="mt-4 sm:mt-6">{inputForm}</div>
+                <div className="mt-3 hidden flex-wrap justify-center gap-1.5 sm:mt-4 sm:flex sm:gap-2">
                   {SUGGESTIONS.map((k) => (
                     <button
                       key={k}
                       type="button"
                       onClick={() => void send(t(lang, k))}
-                      className="min-h-12 rounded-full border-2 border-brand-800/20 bg-card px-4 py-2 text-[1rem] font-semibold text-brand-800 transition hover:border-brand-800 active:scale-[0.97]"
+                      className="min-h-10 rounded-full border-2 border-brand-800/20 bg-card px-3 py-1.5 text-[0.875rem] font-semibold text-brand-800 transition hover:border-brand-800 active:scale-[0.97] sm:min-h-12 sm:px-4 sm:py-2 sm:text-[1rem]"
                     >
                       {t(lang, k)}
                     </button>
