@@ -15,7 +15,7 @@ import { InstallPrompt } from "./InstallPrompt";
 import { GoogleG, SignIn } from "./SignIn";
 import { useAccount } from "./useAccount";
 import { useLang } from "../useLang";
-import { TextSize } from "../TextSize";
+import { LangGate } from "./LangGate";
 import { ThemeToggle } from "../ThemeToggle";
 import { GetIt } from "./GetIt";
 import { useRecorder } from "./useRecorder";
@@ -69,7 +69,7 @@ function toApi(messages: ChatMessage[]) {
 }
 
 export function ChatApp() {
-  const [lang, setLang] = useLang("passenger");
+  const { lang, setLang, chosen, suggested } = useLang("passenger");
   const acct = useAccount();
   const userId = acct.user?.uid ?? null;
   const [guest, setGuest] = useState<boolean | null>(null);
@@ -89,7 +89,7 @@ export function ChatApp() {
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
   // "login": ask to sign in. "cloud": signed in, chats saved in Firestore. "local": no account, chat saved on this device.
-  const mode: "loading" | "login" | "cloud" | "local" = !acct.ready || guest === null ? "loading" : userId ? "cloud" : acct.enabled && !guest ? "login" : "local";
+  const mode: "loading" | "login" | "cloud" | "local" = chosen === null || !acct.ready || guest === null ? "loading" : userId ? "cloud" : acct.enabled && !guest ? "login" : "local";
   const inApp = mode === "cloud" || mode === "local";
 
   useEffect(() => {
@@ -384,7 +384,7 @@ export function ChatApp() {
       <header className="shrink-0 border-b border-line bg-card">
         <div className="flex items-center justify-between gap-2 px-3 py-2.5 sm:px-4 lg:px-8 lg:py-3">
           <Logo size={38} sub={t(lang, "tagline")} />
-          <nav className={`items-center gap-1 rounded-full bg-paper p-1 ${inApp ? "hidden lg:flex" : "hidden"}`} aria-label="RailAssist">
+          <nav className={`items-center gap-1 rounded-full bg-paper p-1 ${chosen && inApp ? "hidden lg:flex" : "hidden"}`} aria-label="RailAssist">
             {VIEWS.map(({ id, key, Icon }) => (
               <button
                 key={id}
@@ -401,7 +401,6 @@ export function ChatApp() {
             ))}
           </nav>
           <div className="flex items-center gap-2">
-            <TextSize label={t(lang, "textSize")} />
             <span className="hidden sm:block">
               <ThemeToggle toDark={t(lang, "darkMode")} toLight={t(lang, "lightMode")} />
             </span>
@@ -410,11 +409,13 @@ export function ChatApp() {
         </div>
       </header>
 
+      {chosen === false && <LangGate suggested={suggested} onPick={setLang} />}
+
       {mode === "loading" && <div className="flex-1" />}
 
-      {mode === "login" && <SignIn lang={lang} onGoogle={googleSignIn} onGuest={continueAsGuest} />}
+      {chosen && mode === "login" &&<SignIn lang={lang} onGoogle={googleSignIn} onGuest={continueAsGuest} />}
 
-      {inApp && view === "services" && (
+      {chosen && inApp && view === "services" && (
         <main className="scroll-quiet min-h-0 flex-1 overflow-y-auto px-4 py-5 lg:px-8 lg:py-8" lang={lang} dir={langDir(lang)}>
           <ServicesView
             lang={lang}
@@ -428,13 +429,13 @@ export function ChatApp() {
         </main>
       )}
 
-      {inApp && view === "help" && (
+      {chosen && inApp && view === "help" && (
         <main className="scroll-quiet min-h-0 flex-1 overflow-y-auto px-4 py-5 lg:px-8 lg:py-8" lang={lang} dir={langDir(lang)}>
           <HelpView lang={lang} note={privacy} />
         </main>
       )}
 
-      {inApp && view === "ask" && (
+      {chosen && inApp && view === "ask" && (
         <div className="flex min-h-0 flex-1">
           {mode === "cloud" && <aside className="hidden w-72 shrink-0 border-r border-line bg-card lg:block xl:w-80">{list}</aside>}
           <section className="flex min-w-0 flex-1 flex-col">
@@ -570,7 +571,7 @@ export function ChatApp() {
       )}
 
       {/* Phone: tabs at the bottom, in thumb reach */}
-      {inApp && (
+      {chosen && inApp && (
       <nav className="grid shrink-0 grid-cols-3 border-t border-line bg-card lg:hidden" aria-label="RailAssist">
         {VIEWS.map(({ id, key, Icon }) => (
           <button
