@@ -637,14 +637,14 @@ function ServicesView({ lang, disabled, onAsk, onChat }: { lang: LangCode; disab
   const callHref = call ? contactHref(call) : null;
   return (
     <div className="mx-auto w-full max-w-5xl">
-      <section className="rounded-3xl border border-line bg-card px-5 py-6 lg:px-8 lg:py-8">
-        <h1 className="text-[1.625rem] font-extrabold leading-tight text-brand-900 lg:text-[2rem]">{t(lang, "servicesTitle")}</h1>
-        <p className="mt-2 max-w-2xl text-[1.0625rem] leading-snug text-muted lg:text-[1.1875rem]">{t(lang, "servicesIntro")}</p>
-        <div className="mt-5 flex flex-col gap-2 sm:flex-row">
+      <section className="rounded-3xl border border-line bg-card px-4 py-4 sm:px-5 sm:py-6 lg:px-8 lg:py-8">
+        <h1 className="text-[1.25rem] font-extrabold leading-tight text-brand-900 sm:text-[1.625rem] lg:text-[2rem]">{t(lang, "servicesTitle")}</h1>
+        <p className="mt-2 hidden max-w-2xl text-[1.0625rem] leading-snug text-muted sm:block lg:text-[1.1875rem]">{t(lang, "servicesIntro")}</p>
+        <div className="mt-3 grid grid-cols-2 gap-2 sm:mt-5 sm:flex sm:flex-row">
           <button
             type="button"
             onClick={onChat}
-            className="flex min-h-14 items-center justify-center gap-2 rounded-2xl bg-brand-800 px-5 text-[1.0625rem] font-bold text-white transition hover:opacity-90 active:scale-[0.98]"
+            className="flex min-h-12 items-center justify-center gap-2 rounded-2xl bg-brand-800 px-3 text-[0.9375rem] font-bold leading-tight text-white transition hover:opacity-90 active:scale-[0.98] sm:min-h-14 sm:px-5 sm:text-[1.0625rem]"
           >
             <MicIcon className="h-5 w-5" />
             {t(lang, "askOwnWords")}
@@ -652,7 +652,7 @@ function ServicesView({ lang, disabled, onAsk, onChat }: { lang: LangCode; disab
           {call && callHref && (
             <a
               href={callHref}
-              className="flex min-h-14 items-center justify-center gap-2 rounded-2xl border-2 border-line px-5 text-[1.0625rem] font-bold text-brand-900 transition hover:border-brand-800 active:scale-[0.98]"
+              className="flex min-h-12 items-center justify-center gap-2 rounded-2xl border-2 border-line px-3 text-[0.9375rem] font-bold leading-tight text-brand-900 transition hover:border-brand-800 active:scale-[0.98] sm:min-h-14 sm:px-5 sm:text-[1.0625rem]"
             >
               <PhoneIcon className="h-5 w-5" />
               {t(lang, "callNumber", { number: call.value })}
