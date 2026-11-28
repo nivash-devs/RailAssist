@@ -2400,9 +2400,37 @@ const DICTS: Partial<Record<LangCode, Dict>> = { en, hi, ta, kn, te, bn, mr, ml,
 // (same script), else English. The AI still replies in the chosen language.
 const FALLBACK: Partial<Record<LangCode, LangCode>> = { brx: "hi", doi: "hi", mai: "hi", sa: "hi", kok: "mr", ks: "ur", sd: "ur" };
 
+// How the name "RailAssist" is written inside sentences in each script, so people who only read
+// their own script can read it. The logo and header keep the English name.
+// TODO(native-speaker review): check each spelling.
+const APP_NAME: Partial<Record<LangCode, string>> = {
+  hi: "रेलअसिस्ट",
+  mr: "रेलअसिस्ट",
+  ne: "रेलअसिस्ट",
+  ta: "ரயில் அசிஸ்ட்",
+  kn: "ರೈಲ್ ಅಸಿಸ್ಟ್",
+  te: "రైల్ అసిస్ట్",
+  ml: "റെയിൽ അസിസ്റ്റ്",
+  bn: "রেল অ্যাসিস্ট",
+  as: "ৰেল এছিষ্ট",
+  gu: "રેલ અસિસ્ટ",
+  pa: "ਰੇਲ ਅਸਿਸਟ",
+  or: "ରେଲ ଅସିଷ୍ଟ",
+  ur: "ریل اسسٹ",
+};
+
+/** The app's name written in the script of the chosen language (English name where there is no UI translation). */
+export function appName(lang: LangCode): string {
+  const own = DICTS[lang] ? lang : FALLBACK[lang];
+  return (own && APP_NAME[own]) || "RailAssist";
+}
+
 export function t(lang: LangCode, key: TKey, params?: Record<string, string | number>): string {
   const fb = FALLBACK[lang];
-  let s = DICTS[lang]?.[key] ?? (fb ? DICTS[fb]?.[key] : undefined) ?? en[key];
+  const own = DICTS[lang]?.[key] ?? (fb ? DICTS[fb]?.[key] : undefined);
+  let s = own ?? en[key];
+  // Only text that was translated gets the native-script name; English fallback text keeps "RailAssist".
+  if (own !== undefined && lang !== "en") s = s.split("RailAssist").join(appName(lang));
   if (params) {
     for (const [k, v] of Object.entries(params)) s = s.split(`{${k}}`).join(String(v));
   }

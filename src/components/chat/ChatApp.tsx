@@ -771,9 +771,9 @@ function TypedText({ text, onProgress, onDone }: { text: string; onProgress?: ()
   });
 
   useEffect(() => {
-    // Reduced motion: finish on the first frame. Otherwise about 25 characters a second, never longer than 3.5 seconds.
+    // Reduced motion: finish on the first frame. Otherwise about 125 characters a second, never longer than 1.5 seconds.
     const reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
-    const duration = reduce ? 0 : Math.min(3500, Math.max(500, chars.length * 40));
+    const duration = reduce ? 0 : Math.min(1500, Math.max(300, chars.length * 8));
     startRef.current = performance.now();
     let raf = 0;
     const tick = (now: number) => {

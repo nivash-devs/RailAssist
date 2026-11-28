@@ -1,6 +1,6 @@
 import { offlineReply, validateReply, type BotReply, abusiveReply } from "@/lib/chat";
 import { GROQ_BASE_URL, MODELS } from "@/lib/config";
-import { aiLanguageName, isLang } from "@/lib/i18n";
+import { aiLanguageName, appName, isLang } from "@/lib/i18n";
 import { isAbusive } from "@/lib/profanity";
 import { buildSystemPrompt } from "@/lib/systemPrompt";
 import type { LangCode } from "@/lib/types";
@@ -89,7 +89,7 @@ export async function POST(req: Request) {
     return Response.json({ reply: offlineReply(last.content, lang), warning: "no_key" });
   }
 
-  const messages: GroqMessage[] = [{ role: "system", content: buildSystemPrompt(aiLanguageName(lang)) }, ...history];
+  const messages: GroqMessage[] = [{ role: "system", content: buildSystemPrompt(aiLanguageName(lang), appName(lang)) }, ...history];
   let reply: BotReply | null = null;
   try {
     reply = validateReply(await askGroq(key, messages), lang);
